@@ -29,28 +29,9 @@ struct MenuBarContentView: View {
                 .font(.headline)
                 .foregroundStyle(.secondary)
             
-            VStack(spacing: 10) {
-                HStack {
-                    Text("focus")
-                    Spacer()
-                    TextField("25", value: $vm.focusMinutes, format: .number)
-                        .frame(width: 50)
-                        .textFieldStyle(.roundedBorder)
-                    Text("min")
-                        .foregroundStyle(.secondary)
-                }
-
-                HStack {
-                    Text("break")
-                    Spacer()
-                    TextField("5", value: $vm.breakMinutes, format: .number)
-                        .frame(width: 50)
-                        .textFieldStyle(.roundedBorder)
-                    Text("min")
-                        .foregroundStyle(.secondary)
-                }
+            if vm.state == .idle {
+                settingsPanel
             }
-            .padding(.horizontal, 8)
             
             
             Text(bubbleText)
@@ -80,6 +61,13 @@ struct MenuBarContentView: View {
                 .buttonStyle(.borderedProminent)
             }
 
+            if vm.state != .idle {
+                Button("reset timer") {
+                    vm.resetTimer()
+                }
+                .buttonStyle(.bordered)
+            }
+
             Divider()
 
             Button("open main window") {
@@ -101,9 +89,9 @@ struct MenuBarContentView: View {
         case .focusRunning:
             return "focus session"
         case .waitingForBreakConfirmation:
-            return "time for a break"
+            return "time for a \(vm.upcomingBreakLabel)"
         case .breakRunning:
-            return "break session"
+            return "\(vm.upcomingBreakLabel) session"
         case .waitingForWorkConfirmation:
             return "ready to continue?"
         case .overdueBreak:
@@ -120,7 +108,7 @@ struct MenuBarContentView: View {
         case .focusRunning:
             return "keep up the good work!"
         case .waitingForBreakConfirmation:
-            return "time for a break"
+            return "time for a \(vm.upcomingBreakLabel)"
         case .breakRunning:
             return "nice job. now, breathe a little"
         case .waitingForWorkConfirmation:
@@ -148,6 +136,47 @@ struct MenuBarContentView: View {
             return "well_angry"
         case .overdueWork:
             return "well_sleep"
+        }
+    }
+
+    private var settingsPanel: some View {
+        VStack(spacing: 8) {
+            sliderRow(title: "focus", suffix: "min", value: $vm.focusMinutes, range: 1...120)
+            sliderRow(title: "break", suffix: "min", value: $vm.breakMinutes, range: 1...60)
+            sliderRow(title: "sessions", suffix: "", value: $vm.sessionsUntilLongBreak, range: 1...12)
+            sliderRow(title: "long break", suffix: "min", value: $vm.longBreakMinutes, range: 1...90)
+            Text("progress: \(vm.completedSessionProgressText)")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding(8)
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color.primary.opacity(0.05))
+        )
+    }
+
+    private func sliderRow(
+        title: String,
+        suffix: String,
+        value: Binding<Int>,
+        range: ClosedRange<Int>
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack {
+                Text(title)
+                Spacer()
+                Text(suffix.isEmpty ? "\(value.wrappedValue)" : "\(value.wrappedValue) \(suffix)")
+                    .foregroundStyle(.secondary)
+            }
+            Slider(
+                value: Binding(
+                    get: { Double(value.wrappedValue) },
+                    set: { value.wrappedValue = Int($0.rounded()) }
+                ),
+                in: Double(range.lowerBound)...Double(range.upperBound),
+                step: 1
+            )
         }
     }
 }

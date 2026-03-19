@@ -38,6 +38,8 @@ struct ContentView: View {
                     .foregroundStyle(.black.opacity(0.55))
 
                 if vm.state == .idle {
+                    settingsPanel
+
                     Button("start work") {
                         vm.startWork()
                     }
@@ -57,6 +59,13 @@ struct ContentView: View {
                     }
                     .buttonStyle(MainButtonStyle())
                 }
+
+                if vm.state != .idle {
+                    Button("reset timer") {
+                        vm.resetTimer()
+                    }
+                    .buttonStyle(MainButtonStyle())
+                }
             }
             .frame(minWidth: 480, minHeight: 520)
             .padding(40)
@@ -70,9 +79,9 @@ struct ContentView: View {
         case .focusRunning:
             return "focus session"
         case .waitingForBreakConfirmation:
-            return "time for a break"
+            return "time for a \(vm.upcomingBreakLabel)"
         case .breakRunning:
-            return "break session"
+            return "\(vm.upcomingBreakLabel) session"
         case .waitingForWorkConfirmation:
             return "ready to continue?"
         case .overdueBreak:
@@ -89,7 +98,7 @@ struct ContentView: View {
         case .focusRunning:
             return "keep up the good work!"
         case .waitingForBreakConfirmation:
-            return "time for a break"
+            return "nice work. time for a \(vm.upcomingBreakLabel)"
         case .breakRunning:
             return "nice job. now, breathe a little"
         case .waitingForWorkConfirmation:
@@ -117,6 +126,65 @@ struct ContentView: View {
             return "well_angry"
         case .overdueWork:
             return "well_sleep"
+        }
+    }
+
+    private var settingsPanel: some View {
+        VStack(spacing: 14) {
+            timerSliderRow(
+                title: "focus minutes",
+                value: $vm.focusMinutes,
+                range: 1...120
+            )
+            timerSliderRow(
+                title: "break minutes",
+                value: $vm.breakMinutes,
+                range: 1...60
+            )
+            timerSliderRow(
+                title: "sessions before long break",
+                value: $vm.sessionsUntilLongBreak,
+                range: 1...12
+            )
+            timerSliderRow(
+                title: "long break minutes",
+                value: $vm.longBreakMinutes,
+                range: 1...90
+            )
+
+            Text("progress: \(vm.completedSessionProgressText)")
+                .font(.subheadline)
+                .foregroundStyle(.black.opacity(0.6))
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color.white.opacity(0.82))
+        )
+        .frame(maxWidth: 360)
+    }
+
+    private func timerSliderRow(title: String, value: Binding<Int>, range: ClosedRange<Int>) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text(title)
+                    .font(.subheadline)
+                    .foregroundStyle(.black.opacity(0.7))
+                Spacer()
+                Text("\(value.wrappedValue)")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.black.opacity(0.8))
+            }
+
+            Slider(
+                value: Binding(
+                    get: { Double(value.wrappedValue) },
+                    set: { value.wrappedValue = Int($0.rounded()) }
+                ),
+                in: Double(range.lowerBound)...Double(range.upperBound),
+                step: 1
+            )
+            .tint(Color(red: 0.94, green: 0.79, blue: 0.39))
         }
     }
 }
