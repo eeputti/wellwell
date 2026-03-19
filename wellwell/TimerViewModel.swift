@@ -31,7 +31,7 @@ final class TimerViewModel: ObservableObject {
     
     private var timer: Timer?
     private var overdueTimer: Timer?
-    private var isUpcomingBreakLong = false
+    private let overdueInterval: TimeInterval = 120
     
     @Published var focusMinutes: Int = 25
     @Published var breakMinutes: Int = 5
@@ -108,7 +108,8 @@ final class TimerViewModel: ObservableObject {
 
     func startWork() {
         stopAllSounds()
-        overdueTimer?.invalidate()
+        clearOverdueState()
+        cancelAllFollowUps()
         stopTimer()
         
         state = .focusRunning
@@ -121,7 +122,8 @@ final class TimerViewModel: ObservableObject {
     
     func startBreak() {
         stopAllSounds()
-        overdueTimer?.invalidate()
+        clearOverdueState()
+        cancelAllFollowUps()
         stopTimer()
         
         state = .breakRunning
@@ -132,7 +134,8 @@ final class TimerViewModel: ObservableObject {
     
     func resumeWork() {
         stopAllSounds()
-        overdueTimer?.invalidate()
+        clearOverdueState()
+        cancelAllFollowUps()
         stopTimer()
         
         state = .focusRunning
@@ -177,24 +180,15 @@ final class TimerViewModel: ObservableObject {
             
             SoundManager.shared.playOneShot(name: "well_focus_done")
             
-            NotificationManager.shared.send(
-                title: "good job! time for a break!",
-                body: "stand up, move a little, drink water"
-            )
-            
-            overdueTimer?.invalidate()
-            overdueTimer = Timer.scheduledTimer(withTimeInterval: 120, repeats: false) { _ in
-                DispatchQueue.main.async {
-                    if self.state == .waitingForBreakConfirmation {
-                        self.state = .overdueBreak
-                        
-                        SoundManager.shared.playLoop(name: "well_angry")
-                        
-                        NotificationManager.shared.send(
-                            title: "hey? it's really time for your break!",
-                            body: "you’re still working..."
-                        )
-                    }
+            NotificationManager.shared.notifyFocusEnded()
+            NotificationManager.shared.cancelBreakFollowUp()
+            NotificationManager.shared.scheduleBreakFollowUp(after: overdueInterval)
+
+            scheduleOverdueTimer(after: overdueInterval) { [weak self] in
+                guard let self else { return }
+                if self.state == .waitingForBreakConfirmation {
+                    self.state = .overdueBreak
+                    SoundManager.shared.playLoop(name: "well_angry")
                 }
             }
             
@@ -207,24 +201,15 @@ final class TimerViewModel: ObservableObject {
             
             SoundManager.shared.playOneShot(name: "well_break")
             
-            NotificationManager.shared.send(
-                title: "break's over",
-                body: "ready to get back to work?"
-            )
-            
-            overdueTimer?.invalidate()
-            overdueTimer = Timer.scheduledTimer(withTimeInterval: 120, repeats: false) { _ in
-                DispatchQueue.main.async {
-                    if self.state == .waitingForWorkConfirmation {
-                        self.state = .overdueWork
-                        
-                        SoundManager.shared.playLoop(name: "well_back_to_work")
-                        
-                        NotificationManager.shared.send(
-                            title: "you still on break?",
-                            body: "let’s get moving again"
-                        )
-                    }
+            NotificationManager.shared.notifyBreakEnded()
+            NotificationManager.shared.cancelWorkFollowUp()
+            NotificationManager.shared.scheduleWorkFollowUp(after: overdueInterval)
+
+            scheduleOverdueTimer(after: overdueInterval) { [weak self] in
+                guard let self else { return }
+                if self.state == .waitingForWorkConfirmation {
+                    self.state = .overdueWork
+                    SoundManager.shared.playLoop(name: "well_back_to_work")
                 }
             }
             
@@ -233,6 +218,26 @@ final class TimerViewModel: ObservableObject {
         }
     }
     
+
+    private func scheduleOverdueTimer(after seconds: TimeInterval, action: @escaping () -> Void) {
+        clearOverdueState()
+        overdueTimer = Timer.scheduledTimer(withTimeInterval: seconds, repeats: false) { _ in
+            DispatchQueue.main.async {
+                action()
+            }
+        }
+    }
+
+    private func clearOverdueState() {
+        overdueTimer?.invalidate()
+        overdueTimer = nil
+    }
+
+    private func cancelAllFollowUps() {
+        NotificationManager.shared.cancelBreakFollowUp()
+        NotificationManager.shared.cancelWorkFollowUp()
+    }
+
     private func stopAllSounds() {
         SoundManager.shared.stop()
     }
