@@ -56,7 +56,7 @@ final class TimerViewModel: ObservableObject {
     }
 
     var completedSessionProgressText: String {
-        "\(completedFocusSessions) / \(sessionsUntilLongBreak)"
+        "\(completedFocusSessions) / \(safeSessionsUntilLongBreak)"
     }
 
     private enum DefaultsKeys {
@@ -68,6 +68,10 @@ final class TimerViewModel: ObservableObject {
 
     private let defaults: UserDefaults
     private var cancellables = Set<AnyCancellable>()
+    
+    private var safeSessionsUntilLongBreak: Int {
+        max(1, sessionsUntilLongBreak)
+    }
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -174,7 +178,7 @@ final class TimerViewModel: ObservableObject {
         switch state {
         case .focusRunning:
             completedFocusSessions += 1
-            isUpcomingBreakLong = completedFocusSessions % sessionsUntilLongBreak == 0
+            isUpcomingBreakLong = completedFocusSessions % safeSessionsUntilLongBreak == 0
             state = .waitingForBreakConfirmation
             registerCompletedPomodoro()
             
@@ -259,19 +263,32 @@ final class TimerViewModel: ObservableObject {
     }
 
     private func loadSettings() {
-        focusMinutes = sanitized(defaults.integer(forKey: DefaultsKeys.focusMinutes), fallback: 25)
-        breakMinutes = sanitized(defaults.integer(forKey: DefaultsKeys.breakMinutes), fallback: 5)
-        sessionsUntilLongBreak = sanitized(defaults.integer(forKey: DefaultsKeys.sessionsUntilLongBreak), fallback: 4)
-        longBreakMinutes = sanitized(defaults.integer(forKey: DefaultsKeys.longBreakMinutes), fallback: 15)
+        focusMinutes = sanitized(defaults.integer(forKey: DefaultsKeys.focusMinutes), fallback: 25, range: 1...120)
+        breakMinutes = sanitized(defaults.integer(forKey: DefaultsKeys.breakMinutes), fallback: 5, range: 1...60)
+        sessionsUntilLongBreak = sanitized(defaults.integer(forKey: DefaultsKeys.sessionsUntilLongBreak), fallback: 4, range: 1...12)
+        longBreakMinutes = sanitized(defaults.integer(forKey: DefaultsKeys.longBreakMinutes), fallback: 15, range: 1...90)
         timeRemaining = focusDuration
     }
 
-    private func sanitized(_ value: Int, fallback: Int) -> Int {
-        value > 0 ? value : fallback
+    private func sanitized(_ value: Int, fallback: Int, range: ClosedRange<Int>) -> Int {
+        guard value > 0 else { return fallback }
+        return min(max(value, range.lowerBound), range.upperBound)
     }
 
     private func savePositive(_ value: Int, forKey key: String, fallback: Int) {
-        let sanitizedValue = sanitized(value, fallback: fallback)
+        let sanitizedValue: Int
+        switch key {
+        case DefaultsKeys.focusMinutes:
+            sanitizedValue = sanitized(value, fallback: fallback, range: 1...120)
+        case DefaultsKeys.breakMinutes:
+            sanitizedValue = sanitized(value, fallback: fallback, range: 1...60)
+        case DefaultsKeys.sessionsUntilLongBreak:
+            sanitizedValue = sanitized(value, fallback: fallback, range: 1...12)
+        case DefaultsKeys.longBreakMinutes:
+            sanitizedValue = sanitized(value, fallback: fallback, range: 1...90)
+        default:
+            sanitizedValue = fallback
+        }
         if value != sanitizedValue {
             switch key {
             case DefaultsKeys.focusMinutes:

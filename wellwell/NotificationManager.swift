@@ -73,6 +73,8 @@ final class NotificationManager {
         content.title = title
         content.body = body
         content.sound = .default
+        
+        removePendingAndDelivered(for: identifier)
 
         let request = UNNotificationRequest(
             identifier: identifier,
@@ -80,7 +82,11 @@ final class NotificationManager {
             trigger: nil
         )
 
-        UNUserNotificationCenter.current().add(request)
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error {
+                print("failed to send notification (\(identifier)): \(error.localizedDescription)")
+            }
+        }
     }
 
     private func schedule(identifier: String, title: String, body: String, after seconds: TimeInterval) {
@@ -89,10 +95,16 @@ final class NotificationManager {
         content.body = body
         content.sound = .default
 
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: seconds, repeats: false)
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(1, seconds), repeats: false)
         let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+        
+        removePendingAndDelivered(for: identifier)
 
-        UNUserNotificationCenter.current().add(request)
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error {
+                print("failed to schedule notification (\(identifier)): \(error.localizedDescription)")
+            }
+        }
     }
 
     private func removePendingAndDelivered(for identifier: String) {
