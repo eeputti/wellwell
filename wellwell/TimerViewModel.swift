@@ -35,16 +35,9 @@ final class TimerViewModel: ObservableObject {
     
     @Published var focusMinutes: Int = 25
     @Published var breakMinutes: Int = 5
-    @Published private(set) var streakDays: Int = 0
-    @Published var showStreakReaction: Bool = false
-
-    private let calendar = Calendar.current
-    private let dailyPomodoroGoal = 4
-    private let streakDaysKey = "streakDays"
-    private let lastQualifiedDayKey = "lastQualifiedDay"
-    private let todaysPomodoroCountKey = "todaysPomodoroCount"
-    private let todaysPomodoroDateKey = "todaysPomodoroDate"
-    private let userDefaults = UserDefaults.standard
+    @Published var sessionsUntilLongBreak: Int = 4
+    @Published var longBreakMinutes: Int = 15
+    @Published private(set) var completedFocusSessions: Int = 0
 
     var focusDuration: Int {
         max(1, focusMinutes) * 60
@@ -53,43 +46,58 @@ final class TimerViewModel: ObservableObject {
     var breakDuration: Int {
         max(1, breakMinutes) * 60
     }
+
+    var longBreakDuration: Int {
+        max(1, longBreakMinutes) * 60
+    }
+
+    var upcomingBreakLabel: String {
+        isUpcomingBreakLong ? "long break" : "short break"
+    }
+
+    var completedSessionProgressText: String {
+        "\(completedFocusSessions) / \(sessionsUntilLongBreak)"
+    }
+
+    private enum DefaultsKeys {
+        static let focusMinutes = "focusMinutes"
+        static let breakMinutes = "breakMinutes"
+        static let sessionsUntilLongBreak = "sessionsUntilLongBreak"
+        static let longBreakMinutes = "longBreakMinutes"
+    }
+
+    private let defaults: UserDefaults
     private var cancellables = Set<AnyCancellable>()
 
-    init() {
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+        loadSettings()
+
         $focusMinutes
-            .sink { [weak self] _ in
+            .sink { [weak self] value in
+                self?.savePositive(value, forKey: DefaultsKeys.focusMinutes, fallback: 25)
                 self?.resetIfIdle()
             }
             .store(in: &cancellables)
 
         $breakMinutes
-            .sink { [weak self] _ in
+            .sink { [weak self] value in
+                self?.savePositive(value, forKey: DefaultsKeys.breakMinutes, fallback: 5)
                 self?.resetIfIdle()
             }
             .store(in: &cancellables)
 
-        loadStreakState()
-    }
+        $sessionsUntilLongBreak
+            .sink { [weak self] value in
+                self?.savePositive(value, forKey: DefaultsKeys.sessionsUntilLongBreak, fallback: 4)
+            }
+            .store(in: &cancellables)
 
-    var streakMood: StreakMood {
-        switch streakDays {
-        case ..<1:
-            return .sleepy
-        case 1...3:
-            return .happy
-        case 4...7:
-            return .excited
-        default:
-            return .golden
-        }
-    }
-
-    func triggerOpeningReaction() {
-        showStreakReaction = true
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
-            self?.showStreakReaction = false
-        }
+        $longBreakMinutes
+            .sink { [weak self] value in
+                self?.savePositive(value, forKey: DefaultsKeys.longBreakMinutes, fallback: 15)
+            }
+            .store(in: &cancellables)
     }
 
     private func resetIfIdle() {
@@ -119,7 +127,7 @@ final class TimerViewModel: ObservableObject {
         stopTimer()
         
         state = .breakRunning
-        timeRemaining = breakDuration
+        timeRemaining = isUpcomingBreakLong ? longBreakDuration : breakDuration
         
         startTimer()
     }
@@ -165,6 +173,8 @@ final class TimerViewModel: ObservableObject {
         
         switch state {
         case .focusRunning:
+            completedFocusSessions += 1
+            isUpcomingBreakLong = completedFocusSessions % sessionsUntilLongBreak == 0
             state = .waitingForBreakConfirmation
             registerCompletedPomodoro()
             
@@ -184,6 +194,10 @@ final class TimerViewModel: ObservableObject {
             
         case .breakRunning:
             state = .waitingForWorkConfirmation
+            if isUpcomingBreakLong {
+                completedFocusSessions = 0
+            }
+            isUpcomingBreakLong = false
             
             SoundManager.shared.playOneShot(name: "well_break")
             
@@ -234,68 +248,44 @@ final class TimerViewModel: ObservableObject {
         return String(format: "%02d:%02d", minutes, seconds)
     }
 
-    private func loadStreakState() {
-        streakDays = userDefaults.integer(forKey: streakDaysKey)
-        rollOverIfNeeded()
+    func resetTimer() {
+        stopAllSounds()
+        overdueTimer?.invalidate()
+        stopTimer()
+        isUpcomingBreakLong = false
+        completedFocusSessions = 0
+        state = .idle
+        timeRemaining = focusDuration
     }
 
-    private func rollOverIfNeeded(now: Date = Date()) {
-        let today = calendar.startOfDay(for: now)
-        let yesterday = calendar.date(byAdding: .day, value: -1, to: today)
-
-        if let lastQualifiedDay = userDefaults.object(forKey: lastQualifiedDayKey) as? Date {
-            let normalizedQualifiedDay = calendar.startOfDay(for: lastQualifiedDay)
-            if normalizedQualifiedDay < (yesterday ?? today) {
-                streakDays = 0
-                userDefaults.set(0, forKey: streakDaysKey)
-            }
-        } else {
-            streakDays = 0
-            userDefaults.set(0, forKey: streakDaysKey)
-        }
-
-        if let trackedDay = userDefaults.object(forKey: todaysPomodoroDateKey) as? Date {
-            let normalizedTrackedDay = calendar.startOfDay(for: trackedDay)
-            if normalizedTrackedDay != today {
-                userDefaults.set(0, forKey: todaysPomodoroCountKey)
-                userDefaults.set(today, forKey: todaysPomodoroDateKey)
-            }
-        } else {
-            userDefaults.set(today, forKey: todaysPomodoroDateKey)
-            userDefaults.set(0, forKey: todaysPomodoroCountKey)
-        }
+    private func loadSettings() {
+        focusMinutes = sanitized(defaults.integer(forKey: DefaultsKeys.focusMinutes), fallback: 25)
+        breakMinutes = sanitized(defaults.integer(forKey: DefaultsKeys.breakMinutes), fallback: 5)
+        sessionsUntilLongBreak = sanitized(defaults.integer(forKey: DefaultsKeys.sessionsUntilLongBreak), fallback: 4)
+        longBreakMinutes = sanitized(defaults.integer(forKey: DefaultsKeys.longBreakMinutes), fallback: 15)
+        timeRemaining = focusDuration
     }
 
-    private func registerCompletedPomodoro(now: Date = Date()) {
-        rollOverIfNeeded(now: now)
+    private func sanitized(_ value: Int, fallback: Int) -> Int {
+        value > 0 ? value : fallback
+    }
 
-        let today = calendar.startOfDay(for: now)
-        let yesterday = calendar.date(byAdding: .day, value: -1, to: today)
-
-        var todaysCount = userDefaults.integer(forKey: todaysPomodoroCountKey)
-        todaysCount += 1
-        userDefaults.set(todaysCount, forKey: todaysPomodoroCountKey)
-        userDefaults.set(today, forKey: todaysPomodoroDateKey)
-
-        guard todaysCount >= dailyPomodoroGoal else {
-            return
-        }
-
-        if let lastQualifiedDay = userDefaults.object(forKey: lastQualifiedDayKey) as? Date {
-            let normalizedQualifiedDay = calendar.startOfDay(for: lastQualifiedDay)
-
-            if normalizedQualifiedDay == today {
-                return
-            } else if normalizedQualifiedDay == yesterday {
-                streakDays += 1
-            } else {
-                streakDays = 1
+    private func savePositive(_ value: Int, forKey key: String, fallback: Int) {
+        let sanitizedValue = sanitized(value, fallback: fallback)
+        if value != sanitizedValue {
+            switch key {
+            case DefaultsKeys.focusMinutes:
+                focusMinutes = sanitizedValue
+            case DefaultsKeys.breakMinutes:
+                breakMinutes = sanitizedValue
+            case DefaultsKeys.sessionsUntilLongBreak:
+                sessionsUntilLongBreak = sanitizedValue
+            case DefaultsKeys.longBreakMinutes:
+                longBreakMinutes = sanitizedValue
+            default:
+                break
             }
-        } else {
-            streakDays = 1
         }
-
-        userDefaults.set(streakDays, forKey: streakDaysKey)
-        userDefaults.set(today, forKey: lastQualifiedDayKey)
+        defaults.set(sanitizedValue, forKey: key)
     }
 }
