@@ -12,7 +12,10 @@ import AppKit
 
 struct MenuBarContentView: View {
     @EnvironmentObject var vm: TimerViewModel
+    @EnvironmentObject var purchaseManager: PurchaseManager
     @Environment(\.openWindow) private var openWindow
+    @State private var showPaywall = false
+    @State private var showProSettings = false
 
     var body: some View {
         VStack(spacing: 14) {
@@ -80,6 +83,14 @@ struct MenuBarContentView: View {
         }
         .padding(16)
         .frame(width: 280)
+        .sheet(isPresented: $showPaywall) {
+            ProPaywallView()
+                .environmentObject(purchaseManager)
+        }
+        .sheet(isPresented: $showProSettings) {
+            ProSessionSettingsView()
+                .environmentObject(vm)
+        }
     }
 
     private var statusText: String {
@@ -178,5 +189,112 @@ struct MenuBarContentView: View {
                 step: 1
             )
         }
+    }
+}
+
+struct ProSessionSettingsView: View {
+    @EnvironmentObject var vm: TimerViewModel
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Text("Wellwell Pro")
+                .font(.title2.weight(.semibold))
+            Text("Customize your session lengths to match your flow.")
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+
+            HStack {
+                Text("focus")
+                Spacer()
+                TextField("25", value: $vm.focusMinutes, format: .number)
+                    .frame(width: 60)
+                    .textFieldStyle(.roundedBorder)
+                Text("min")
+                    .foregroundStyle(.secondary)
+            }
+
+            HStack {
+                Text("break")
+                Spacer()
+                TextField("5", value: $vm.breakMinutes, format: .number)
+                    .frame(width: 60)
+                    .textFieldStyle(.roundedBorder)
+                Text("min")
+                    .foregroundStyle(.secondary)
+            }
+
+            Button("done") {
+                dismiss()
+            }
+            .buttonStyle(.borderedProminent)
+            .padding(.top, 8)
+        }
+        .padding(20)
+        .frame(width: 320)
+    }
+}
+
+struct ProPaywallView: View {
+    @EnvironmentObject var purchaseManager: PurchaseManager
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(spacing: 14) {
+            Image("well_idle")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 110, height: 80)
+
+            Text("unlock wellwell pro ☁️")
+                .font(.title2.weight(.semibold))
+
+            Text("Your cloud buddy wants to help you focus your way. Unlock Pro for custom session lengths forever.")
+                .multilineTextAlignment(.center)
+                .foregroundStyle(.secondary)
+
+            if let product = purchaseManager.proProduct {
+                Text(product.displayPrice)
+                    .font(.title3.weight(.medium))
+            }
+
+            Button {
+                Task {
+                    await purchaseManager.purchasePro()
+                    if purchaseManager.isPro {
+                        dismiss()
+                    }
+                }
+            } label: {
+                if purchaseManager.isPurchasing {
+                    ProgressView()
+                        .frame(maxWidth: .infinity)
+                } else {
+                    Text("adopt cloud pro")
+                        .frame(maxWidth: .infinity)
+                }
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(purchaseManager.isPurchasing)
+
+            Button("restore purchase") {
+                Task {
+                    await purchaseManager.restorePurchases()
+                    if purchaseManager.isPro {
+                        dismiss()
+                    }
+                }
+            }
+            .buttonStyle(.bordered)
+
+            if let error = purchaseManager.purchaseError {
+                Text(error)
+                    .font(.footnote)
+                    .foregroundStyle(.red)
+                    .multilineTextAlignment(.center)
+            }
+        }
+        .padding(24)
+        .frame(width: 360)
     }
 }

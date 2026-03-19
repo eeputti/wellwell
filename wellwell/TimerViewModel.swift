@@ -9,6 +9,12 @@ import Foundation
 import Combine
 
 final class TimerViewModel: ObservableObject {
+    enum StreakMood {
+        case sleepy
+        case happy
+        case excited
+        case golden
+    }
     
     enum SessionState {
         case idle
@@ -167,6 +173,7 @@ final class TimerViewModel: ObservableObject {
             completedFocusSessions += 1
             isUpcomingBreakLong = completedFocusSessions % sessionsUntilLongBreak == 0
             state = .waitingForBreakConfirmation
+            registerCompletedPomodoro()
             
             SoundManager.shared.playOneShot(name: "well_focus_done")
             

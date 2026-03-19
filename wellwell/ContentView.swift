@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject var vm: TimerViewModel
+
     var body: some View {
         ZStack {
             Color(red: 0.96, green: 0.95, blue: 0.92)
@@ -19,6 +20,11 @@ struct ContentView: View {
                     .font(.title2)
                     .fontWeight(.semibold)
                     .foregroundStyle(.black.opacity(0.7))
+
+                if vm.showStreakReaction {
+                    StreakReactionView(streakDays: vm.streakDays, mood: vm.streakMood)
+                        .transition(.opacity.combined(with: .scale))
+                }
 
                 SpeechBubbleView(text: bubbleText)
                     .transition(.opacity.combined(with: .scale))
@@ -70,6 +76,10 @@ struct ContentView: View {
             .frame(minWidth: 480, minHeight: 520)
             .padding(40)
         }
+        .onAppear {
+            vm.triggerOpeningReaction()
+        }
+        .animation(.easeInOut(duration: 0.25), value: vm.showStreakReaction)
     }
 
     private var statusText: String {
@@ -185,6 +195,104 @@ struct ContentView: View {
                 step: 1
             )
             .tint(Color(red: 0.94, green: 0.79, blue: 0.39))
+        }
+    }
+}
+
+struct StreakReactionView: View {
+    let streakDays: Int
+    let mood: TimerViewModel.StreakMood
+
+    @State private var floatUp = false
+    @State private var pulse = false
+    @State private var twinkle = false
+
+    var body: some View {
+        HStack(spacing: 10) {
+            ZStack(alignment: .topTrailing) {
+                Image(mascotImageName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 64, height: 48)
+                    .overlay(goldenOverlay)
+                    .scaleEffect(pulse ? 1.04 : 0.98)
+                    .offset(y: floatUp ? -2 : 2)
+
+                if mood == .golden {
+                    Image(systemName: "sparkles")
+                        .font(.caption)
+                        .foregroundStyle(Color.yellow.opacity(0.9))
+                        .rotationEffect(.degrees(twinkle ? 8 : -8))
+                        .scaleEffect(twinkle ? 1.15 : 0.9)
+                        .offset(x: 6, y: -6)
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("streak: \(streakDays) day\(streakDays == 1 ? "" : "s")")
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                Text(reactionText)
+                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.white.opacity(0.85))
+        )
+        .onAppear {
+            withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) {
+                floatUp.toggle()
+            }
+            withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true)) {
+                pulse.toggle()
+            }
+            withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true)) {
+                twinkle.toggle()
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var goldenOverlay: some View {
+        if mood == .golden {
+            RoundedRectangle(cornerRadius: 10)
+                .fill(
+                    LinearGradient(
+                        colors: [Color.yellow.opacity(0.24), Color.orange.opacity(0.15)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .blendMode(.screen)
+        }
+    }
+
+    private var mascotImageName: String {
+        switch mood {
+        case .sleepy:
+            return "well_sleep"
+        case .happy:
+            return "well_idle"
+        case .excited:
+            return "well_break_alert"
+        case .golden:
+            return "well_idle"
+        }
+    }
+
+    private var reactionText: String {
+        switch mood {
+        case .sleepy:
+            return "shh... warming up ☁️"
+        case .happy:
+            return "yay, you’re on a roll!"
+        case .excited:
+            return "woah, amazing focus!"
+        case .golden:
+            return "golden cloud sighting ✨"
         }
     }
 }
