@@ -9,6 +9,12 @@ import Foundation
 import Combine
 
 final class TimerViewModel: ObservableObject {
+    enum StreakMood {
+        case sleepy
+        case happy
+        case excited
+        case golden
+    }
     
     enum SessionState {
         case idle
@@ -28,6 +34,16 @@ final class TimerViewModel: ObservableObject {
     
     @Published var focusMinutes: Int = 25
     @Published var breakMinutes: Int = 5
+    @Published private(set) var streakDays: Int = 0
+    @Published var showStreakReaction: Bool = false
+
+    private let calendar = Calendar.current
+    private let dailyPomodoroGoal = 4
+    private let streakDaysKey = "streakDays"
+    private let lastQualifiedDayKey = "lastQualifiedDay"
+    private let todaysPomodoroCountKey = "todaysPomodoroCount"
+    private let todaysPomodoroDateKey = "todaysPomodoroDate"
+    private let userDefaults = UserDefaults.standard
 
     var focusDuration: Int {
         max(1, focusMinutes) * 60
@@ -50,6 +66,29 @@ final class TimerViewModel: ObservableObject {
                 self?.resetIfIdle()
             }
             .store(in: &cancellables)
+
+        loadStreakState()
+    }
+
+    var streakMood: StreakMood {
+        switch streakDays {
+        case ..<1:
+            return .sleepy
+        case 1...3:
+            return .happy
+        case 4...7:
+            return .excited
+        default:
+            return .golden
+        }
+    }
+
+    func triggerOpeningReaction() {
+        showStreakReaction = true
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
+            self?.showStreakReaction = false
+        }
     }
 
     private func resetIfIdle() {
@@ -123,6 +162,7 @@ final class TimerViewModel: ObservableObject {
         switch state {
         case .focusRunning:
             state = .waitingForBreakConfirmation
+            registerCompletedPomodoro()
             
             SoundManager.shared.playOneShot(name: "well_focus_done")
             
@@ -186,5 +226,70 @@ final class TimerViewModel: ObservableObject {
         let minutes = timeRemaining / 60
         let seconds = timeRemaining % 60
         return String(format: "%02d:%02d", minutes, seconds)
+    }
+
+    private func loadStreakState() {
+        streakDays = userDefaults.integer(forKey: streakDaysKey)
+        rollOverIfNeeded()
+    }
+
+    private func rollOverIfNeeded(now: Date = Date()) {
+        let today = calendar.startOfDay(for: now)
+        let yesterday = calendar.date(byAdding: .day, value: -1, to: today)
+
+        if let lastQualifiedDay = userDefaults.object(forKey: lastQualifiedDayKey) as? Date {
+            let normalizedQualifiedDay = calendar.startOfDay(for: lastQualifiedDay)
+            if normalizedQualifiedDay < (yesterday ?? today) {
+                streakDays = 0
+                userDefaults.set(0, forKey: streakDaysKey)
+            }
+        } else {
+            streakDays = 0
+            userDefaults.set(0, forKey: streakDaysKey)
+        }
+
+        if let trackedDay = userDefaults.object(forKey: todaysPomodoroDateKey) as? Date {
+            let normalizedTrackedDay = calendar.startOfDay(for: trackedDay)
+            if normalizedTrackedDay != today {
+                userDefaults.set(0, forKey: todaysPomodoroCountKey)
+                userDefaults.set(today, forKey: todaysPomodoroDateKey)
+            }
+        } else {
+            userDefaults.set(today, forKey: todaysPomodoroDateKey)
+            userDefaults.set(0, forKey: todaysPomodoroCountKey)
+        }
+    }
+
+    private func registerCompletedPomodoro(now: Date = Date()) {
+        rollOverIfNeeded(now: now)
+
+        let today = calendar.startOfDay(for: now)
+        let yesterday = calendar.date(byAdding: .day, value: -1, to: today)
+
+        var todaysCount = userDefaults.integer(forKey: todaysPomodoroCountKey)
+        todaysCount += 1
+        userDefaults.set(todaysCount, forKey: todaysPomodoroCountKey)
+        userDefaults.set(today, forKey: todaysPomodoroDateKey)
+
+        guard todaysCount >= dailyPomodoroGoal else {
+            return
+        }
+
+        if let lastQualifiedDay = userDefaults.object(forKey: lastQualifiedDayKey) as? Date {
+            let normalizedQualifiedDay = calendar.startOfDay(for: lastQualifiedDay)
+
+            if normalizedQualifiedDay == today {
+                return
+            } else if normalizedQualifiedDay == yesterday {
+                streakDays += 1
+            } else {
+                streakDays = 1
+            }
+        } else {
+            streakDays = 1
+        }
+
+        userDefaults.set(streakDays, forKey: streakDaysKey)
+        userDefaults.set(today, forKey: lastQualifiedDayKey)
     }
 }
