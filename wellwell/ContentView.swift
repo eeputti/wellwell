@@ -24,7 +24,11 @@ struct ContentView: View {
                 }
 
                 cloudCard
+                consistencyCard
                 timerCard
+                if vm.showPostSessionFlow && vm.state == .waitingForBreakConfirmation {
+                    postSessionCard
+                }
 
                 Spacer(minLength: 0)
             }
@@ -139,6 +143,40 @@ struct ContentView: View {
         .frame(maxWidth: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 24)
+                .fill(Color.white.opacity(0.82))
+        )
+    }
+
+    private var postSessionCard: some View {
+        VStack(spacing: 10) {
+            Text("nice work ✨")
+                .font(.headline)
+                .foregroundStyle(.black.opacity(0.75))
+
+            Text("today: \(vm.todaySessionCount) sessions • \(vm.todayFocusMinutes) min focus")
+                .font(.subheadline)
+                .foregroundStyle(.black.opacity(0.55))
+
+            Text("one more session?")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.black.opacity(0.7))
+
+            HStack(spacing: 10) {
+                Button("one more") {
+                    vm.continueWithAnotherSession()
+                }
+                .buttonStyle(MainButtonStyle())
+
+                Button("not now") {
+                    vm.declineAnotherSession()
+                }
+                .buttonStyle(SecondaryButtonStyle())
+            }
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
                 .fill(Color.white.opacity(0.82))
         )
     }

@@ -43,6 +43,8 @@ final class TimerViewModel: ObservableObject {
     @Published var longBreakMinutes: Int = 15
     @Published private(set) var completedFocusSessions: Int = 0
     @Published var pendingReflectionSessionID: UUID?
+    @Published var showPostSessionFlow: Bool = false
+    @Published private(set) var latestCompletedSessionID: UUID?
     var isUpcomingBreakLong: Bool = false
 
     var focusDuration: Int {
@@ -123,6 +125,7 @@ final class TimerViewModel: ObservableObject {
         clearOverdueState()
         cancelAllFollowUps()
         stopTimer()
+        showPostSessionFlow = false
 
         state = .focusRunning
         timeRemaining = focusDuration
@@ -137,6 +140,7 @@ final class TimerViewModel: ObservableObject {
         clearOverdueState()
         cancelAllFollowUps()
         stopTimer()
+        showPostSessionFlow = false
 
         state = .breakRunning
         timeRemaining = isUpcomingBreakLong ? longBreakDuration : breakDuration
@@ -149,6 +153,7 @@ final class TimerViewModel: ObservableObject {
         clearOverdueState()
         cancelAllFollowUps()
         stopTimer()
+        showPostSessionFlow = false
 
         state = .focusRunning
         timeRemaining = focusDuration
@@ -275,6 +280,7 @@ final class TimerViewModel: ObservableObject {
         stopTimer()
         isUpcomingBreakLong = false
         completedFocusSessions = 0
+        showPostSessionFlow = false
         state = .idle
         timeRemaining = focusDuration
     }
@@ -394,6 +400,18 @@ final class TimerViewModel: ObservableObject {
         return "often low productivity"
     }
 
+    var recentIntentions: [String] {
+        var seen = Set<String>()
+        return sessionHistory
+            .reversed()
+            .compactMap(\.intention)
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .filter { seen.insert($0.lowercased()).inserted }
+            .prefix(3)
+            .map { $0 }
+    }
+
     var averageFeelingScore: Double? {
         let values = sessionHistory.compactMap(\.reflectionFeeling)
         guard !values.isEmpty else { return nil }
@@ -445,13 +463,30 @@ final class TimerViewModel: ObservableObject {
     }
 
     private func registerCompletedPomodoro() {
-        let record = SessionRecord(focusSeconds: focusDuration)
+        let trimmedIntention = sessionIntentionDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+        let record = SessionRecord(
+            focusSeconds: focusDuration,
+            intention: trimmedIntention.isEmpty ? nil : trimmedIntention
+        )
         sessionHistory.append(record)
-        pendingReflectionSessionID = record.id
+        latestCompletedSessionID = record.id
+        pendingReflectionSessionID = nil
+        showPostSessionFlow = true
         trimHistory()
         saveSessionHistory()
         streakDays = calculateStreakDays(from: sessionHistory)
         streakMood = mood(for: streakDays)
+    }
+
+    func continueWithAnotherSession() {
+        showPostSessionFlow = false
+        pendingReflectionSessionID = nil
+        startWork()
+    }
+
+    func declineAnotherSession() {
+        showPostSessionFlow = false
+        pendingReflectionSessionID = latestCompletedSessionID
     }
 
     func saveReflection(

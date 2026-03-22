@@ -34,6 +34,13 @@ struct SessionHistoryView: View {
                                 Text("\(session.focusSeconds / 60) min")
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
+
+                                if let intention = session.intention, !intention.isEmpty {
+                                    Text("focus: \(intention)")
+                                        .font(.subheadline)
+                                        .foregroundStyle(.black.opacity(0.62))
+                                        .lineLimit(2)
+                                }
                             }
                             .padding(.vertical, 2)
                         }
