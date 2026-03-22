@@ -9,6 +9,8 @@ struct ContentView: View {
 
     @State private var showStats = false
     @State private var showSettings = false
+    @State private var showStartRitualOverlay = false
+    @State private var isStartingSession = false
 
     var body: some View {
         GeometryReader { proxy in
@@ -45,6 +47,11 @@ struct ContentView: View {
                 }
                 .frame(minWidth: 340, minHeight: 290)
                 .padding(isCompact ? 16 : 30)
+
+                if showStartRitualOverlay {
+                    StartRitualOverlay()
+                        .transition(.opacity)
+                }
             }
         }
         .onAppear {
@@ -82,6 +89,7 @@ struct ContentView: View {
             OnboardingView()
         }
         .animation(.easeInOut(duration: 0.25), value: vm.showStreakReaction)
+        .animation(.easeInOut(duration: 0.25), value: showStartRitualOverlay)
     }
 
     private var compactTopRow: some View {
@@ -233,10 +241,11 @@ struct ContentView: View {
     private var timerActionButtons: some View {
         if vm.state == .idle {
             Button("let’s begin") {
-                vm.startWork()
+                startSessionWithRitual()
             }
             .buttonStyle(MainButtonStyle())
             .keyboardShortcut("f", modifiers: [.command, .shift])
+            .disabled(isStartingSession)
         }
 
         if vm.state == .waitingForBreakConfirmation || vm.state == .overdueBreak {
@@ -389,6 +398,41 @@ struct ContentView: View {
 
     private func shouldUseCompactLayout(for size: CGSize) -> Bool {
         size.width < 640 || size.height < 520
+    }
+
+    private func startSessionWithRitual() {
+        guard !isStartingSession else { return }
+        isStartingSession = true
+
+        withAnimation(.easeInOut(duration: 0.25)) {
+            showStartRitualOverlay = true
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+            withAnimation(.easeInOut(duration: 0.25)) {
+                showStartRitualOverlay = false
+            }
+            vm.startWork()
+            isStartingSession = false
+        }
+    }
+}
+
+private struct StartRitualOverlay: View {
+    var body: some View {
+        Color.black.opacity(0.15)
+            .ignoresSafeArea()
+            .overlay {
+                Text("take a breath")
+                    .font(.system(size: 24, weight: .medium, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.95))
+                    .padding(.horizontal, 28)
+                    .padding(.vertical, 18)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color.black.opacity(0.32))
+                    )
+            }
     }
 }
 
