@@ -32,10 +32,6 @@ struct CharacterView: View {
         self.onLockedTap = onLockedTap
     }
 
-    private var expressionKey: String {
-        String(describing: expression).lowercased()
-    }
-
     private var resolvedCloudColor: CloudColor {
         cloudColor ?? CloudColor(storedValue: selectedCloudColorValue)
     }
@@ -56,10 +52,6 @@ struct CharacterView: View {
         }
 
         return nil
-    }
-
-    private var isIdleExpression: Bool {
-        expressionKey == "idle"
     }
 
     var body: some View {
@@ -89,76 +81,23 @@ struct CharacterView: View {
                 floatUp.toggle()
             }
         }
-        .onChange(of: isIdleExpression) { _, newValue in
-            floatUp = newValue && !isLocked
+        .onChange(of: expression) { _, newValue in
+            let isIdleExpression = newValue == .idle
+            floatUp = isIdleExpression && !isLocked
         }
         .onChange(of: isLocked) { _, newValue in
             if newValue {
                 floatUp = false
-            } else if isIdleExpression {
+            } else if expression == .idle {
                 floatUp = true
             }
         }
-        .animation(.easeInOut(duration: 0.27), value: expressionKey)
+        .animation(.easeInOut(duration: 0.27), value: expression)
         .animation(
             expression == .idle
                 ? .easeInOut(duration: 3).repeatForever(autoreverses: true)
                 : .default,
             value: floatUp
         )
-    }
-}
-
-enum CloudColorOption: String, CaseIterable, Identifiable {
-    case defaultCloud
-    case blue
-    case green
-    case pink
-    case red
-
-    var id: String { rawValue }
-
-    var assetSuffix: String {
-        switch self {
-        case .defaultCloud: return "default"
-        case .blue: return "blue"
-        case .green: return "green"
-        case .pink: return "pink"
-        case .red: return "red"
-        }
-    }
-
-    var color: Color {
-        switch self {
-        case .defaultCloud:
-            return Color(red: 0.94, green: 0.79, blue: 0.39)
-        case .blue:
-            return Color(red: 0.51, green: 0.76, blue: 0.95)
-        case .green:
-            return Color(red: 0.56, green: 0.82, blue: 0.59)
-        case .pink:
-            return Color(red: 0.95, green: 0.67, blue: 0.82)
-        case .red:
-            return Color(red: 0.92, green: 0.52, blue: 0.51)
-        }
-    }
-
-    var label: String {
-        switch self {
-        case .defaultCloud:
-            return "gold"
-        case .blue:
-            return "blue"
-        case .green:
-            return "green"
-        case .pink:
-            return "pink"
-        case .red:
-            return "red"
-        }
-    }
-
-    static func from(rawValue: String) -> CloudColorOption {
-        CloudColorOption(rawValue: rawValue) ?? .defaultCloud
     }
 }

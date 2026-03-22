@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum ExpressionType {
+enum ExpressionType: Equatable {
     case idle
     case focus
     case shortBreak
