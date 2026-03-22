@@ -1,32 +1,23 @@
 import Foundation
 
-enum SessionRecordType: String, Codable {
-    case focus
-    case shortBreak
-    case longBreak
-
-    var title: String {
-        switch self {
-        case .focus:
-            return "focus"
-        case .shortBreak:
-            return "short break"
-        case .longBreak:
-            return "long break"
-        }
-    }
-}
-
-struct SessionRecord: Identifiable, Codable {
+struct SessionRecord: Codable, Identifiable {
     let id: UUID
     let completedAt: Date
-    let type: SessionRecordType
-    let durationMinutes: Int
+    let focusMinutes: Int
+    let sessionLabel: String
+    let wasLongBreakSession: Bool
 
-    init(id: UUID = UUID(), completedAt: Date = Date(), type: SessionRecordType, durationMinutes: Int) {
+    init(
+        id: UUID = UUID(),
+        completedAt: Date = .now,
+        focusMinutes: Int,
+        sessionLabel: String,
+        wasLongBreakSession: Bool
+    ) {
         self.id = id
         self.completedAt = completedAt
-        self.type = type
-        self.durationMinutes = max(1, durationMinutes)
+        self.focusMinutes = focusMinutes
+        self.sessionLabel = sessionLabel
+        self.wasLongBreakSession = wasLongBreakSession
     }
 }

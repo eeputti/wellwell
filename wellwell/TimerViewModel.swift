@@ -31,7 +31,9 @@ final class TimerViewModel: ObservableObject {
     @Published var showStreakReaction: Bool = false
     @Published var streakDays: Int = 0
     @Published var streakMood: StreakMood = .happy
-
+    @Published var sessionLabel: String = ""
+    @Published private(set) var sessionHistory: [SessionRecord] = []
+    
     private var timer: Timer?
     private var overdueTimer: Timer?
     private let overdueInterval: TimeInterval = 120
@@ -69,7 +71,8 @@ final class TimerViewModel: ObservableObject {
         static let breakMinutes = "breakMinutes"
         static let sessionsUntilLongBreak = "sessionsUntilLongBreak"
         static let longBreakMinutes = "longBreakMinutes"
-        static let recentSessions = "recentSessions"
+        static let sessionLabel = "sessionLabel"
+        static let sessionHistory = "sessionHistory"
     }
 
     private let defaults: UserDefaults
@@ -106,6 +109,12 @@ final class TimerViewModel: ObservableObject {
         $longBreakMinutes
             .sink { [weak self] value in
                 self?.savePositive(value, forKey: DefaultsKeys.longBreakMinutes, fallback: 15)
+            }
+            .store(in: &cancellables)
+
+        $sessionLabel
+            .sink { [weak self] value in
+                self?.defaults.set(value.trimmingCharacters(in: .whitespacesAndNewlines), forKey: DefaultsKeys.sessionLabel)
             }
             .store(in: &cancellables)
     }
@@ -277,7 +286,58 @@ final class TimerViewModel: ObservableObject {
         SoundManager.shared.stop()
     }
 
-    private func registerCompletedPomodoro() {}
+    var totalSessionsCompleted: Int {
+        sessionHistory.count
+    }
+
+    var totalFocusMinutes: Int {
+        sessionHistory.reduce(0) { $0 + $1.focusMinutes }
+    }
+
+    var todayFocusMinutes: Int {
+        let calendar = Calendar.current
+        return sessionHistory
+            .filter { calendar.isDateInToday($0.completedAt) }
+            .reduce(0) { $0 + $1.focusMinutes }
+    }
+
+    var currentStreakDays: Int {
+        let calendar = Calendar.current
+        let uniqueDays = Set(sessionHistory.map { calendar.startOfDay(for: $0.completedAt) })
+        guard !uniqueDays.isEmpty else { return 0 }
+
+        var streak = 0
+        var currentDay = calendar.startOfDay(for: .now)
+
+        while uniqueDays.contains(currentDay) {
+            streak += 1
+            guard let previousDay = calendar.date(byAdding: .day, value: -1, to: currentDay) else {
+                break
+            }
+            currentDay = previousDay
+        }
+
+        return streak
+    }
+
+    func weeklyFocusMinutes() -> [Int] {
+        let calendar = Calendar.current
+        let now = Date()
+        let weekStart = calendar.dateInterval(of: .weekOfYear, for: now)?.start ?? calendar.startOfDay(for: now)
+
+        return (0..<7).map { offset in
+            guard
+                let dayStart = calendar.date(byAdding: .day, value: offset, to: weekStart),
+                let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart)
+            else {
+                return 0
+            }
+
+            return sessionHistory
+                .filter { $0.completedAt >= dayStart && $0.completedAt < dayEnd }
+                .reduce(0) { $0 + $1.focusMinutes }
+        }
+    }
 
     func triggerOpeningReaction() {
         guard !showStreakReaction else { return }
@@ -308,7 +368,8 @@ final class TimerViewModel: ObservableObject {
         breakMinutes = sanitized(defaults.integer(forKey: DefaultsKeys.breakMinutes), fallback: 5, range: 1...60)
         sessionsUntilLongBreak = sanitized(defaults.integer(forKey: DefaultsKeys.sessionsUntilLongBreak), fallback: 4, range: 1...12)
         longBreakMinutes = sanitized(defaults.integer(forKey: DefaultsKeys.longBreakMinutes), fallback: 15, range: 1...90)
-        loadRecentSessions()
+        sessionLabel = defaults.string(forKey: DefaultsKeys.sessionLabel) ?? ""
+        loadHistory()
         timeRemaining = focusDuration
     }
 
@@ -346,5 +407,39 @@ final class TimerViewModel: ObservableObject {
             }
         }
         defaults.set(sanitizedValue, forKey: key)
+    }
+
+    private func registerCompletedPomodoro() {
+        let trimmedLabel = sessionLabel.trimmingCharacters(in: .whitespacesAndNewlines)
+        let record = SessionRecord(
+            focusMinutes: focusMinutes,
+            sessionLabel: trimmedLabel,
+            wasLongBreakSession: isUpcomingBreakLong
+        )
+        sessionHistory.insert(record, at: 0)
+        if sessionHistory.count > 120 {
+            sessionHistory = Array(sessionHistory.prefix(120))
+        }
+        saveHistory()
+    }
+
+    private func loadHistory() {
+        guard let data = defaults.data(forKey: DefaultsKeys.sessionHistory) else {
+            sessionHistory = []
+            return
+        }
+        let decoder = JSONDecoder()
+        if let decoded = try? decoder.decode([SessionRecord].self, from: data) {
+            sessionHistory = decoded.sorted { $0.completedAt > $1.completedAt }
+        } else {
+            sessionHistory = []
+        }
+    }
+
+    private func saveHistory() {
+        let encoder = JSONEncoder()
+        if let data = try? encoder.encode(sessionHistory) {
+            defaults.set(data, forKey: DefaultsKeys.sessionHistory)
+        }
     }
 }
