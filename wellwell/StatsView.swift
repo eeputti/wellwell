@@ -164,39 +164,35 @@ struct StatsView: View {
 
     private var yearlyOverviewCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("year at a glance")
+            Text("month at a glance")
                 .font(.headline)
                 .foregroundStyle(.black.opacity(0.72))
 
-            Chart(vm.currentYearMonthlySummary) { month in
-                BarMark(
-                    x: .value("month", month.monthLabel),
-                    y: .value("sessions", month.sessions)
-                )
-                .foregroundStyle(Color(red: 0.43, green: 0.74, blue: 0.95))
-                .cornerRadius(3)
-            }
-            .frame(height: 120)
-            .chartYAxis {
-                AxisMarks(position: .leading)
+            LazyVGrid(columns: streakWeekdayColumns, spacing: 8) {
+                ForEach(weekdaySymbols, id: \.self) { symbol in
+                    Text(symbol)
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(.black.opacity(0.45))
+                        .frame(maxWidth: .infinity)
+                }
             }
 
             LazyVGrid(columns: streakWeekdayColumns, spacing: 8) {
                 ForEach(vm.currentMonthActivityGrid) { day in
-                    VStack(spacing: 4) {
-                        Text(day.isInCurrentMonth ? "\(day.dayNumber)" : "")
-                            .font(.caption2)
-                            .foregroundStyle(.black.opacity(0.5))
-                        Circle()
-                            .fill(dayFillColor(for: day.sessionCount, isVisible: day.isInCurrentMonth))
-                            .frame(width: 22, height: 22)
-                            .overlay {
-                                if day.sessionCount > 0 && day.isInCurrentMonth {
-                                    Text(day.sessionCount > 9 ? "9+" : "\(day.sessionCount)")
-                                        .font(.system(size: 8, weight: .bold))
-                                        .foregroundStyle(.white)
-                                }
+                    Circle()
+                        .fill(dayFillColor(for: day.sessionCount, isVisible: day.isInCurrentMonth))
+                        .frame(width: 28, height: 28)
+                        .overlay {
+                            if day.isInCurrentMonth {
+                                Text("\(day.dayNumber)")
+                                    .font(.caption2.weight(.semibold))
+                                    .foregroundStyle(day.sessionCount > 0 ? .white : .black.opacity(0.58))
                             }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .opacity(day.isInCurrentMonth ? 1 : 0)
+                        .accessibilityLabel(day.isInCurrentMonth ? "day \(day.dayNumber), \(day.sessionCount > 0 ? "active" : "inactive")" : "")
+                        .allowsHitTesting(false)
                     }
                 }
             }
@@ -314,15 +310,15 @@ struct StatsView: View {
 
     private func dayFillColor(for sessionCount: Int, isVisible: Bool) -> Color {
         guard isVisible else { return .clear }
-        switch sessionCount {
-        case 0:
-            return Color.black.opacity(0.08)
-        case 1:
-            return Color(red: 0.98, green: 0.68, blue: 0.31)
-        case 2:
-            return Color(red: 0.97, green: 0.52, blue: 0.21)
-        default:
-            return Color(red: 0.93, green: 0.34, blue: 0.16)
-        }
+        return sessionCount > 0
+            ? Color(red: 0.94, green: 0.69, blue: 0.33)
+            : Color.black.opacity(0.08)
+    }
+
+    private var weekdaySymbols: [String] {
+        let calendar = Calendar.current
+        let symbols = calendar.veryShortWeekdaySymbols
+        let shift = max(0, min(symbols.count - 1, calendar.firstWeekday - 1))
+        return Array(symbols[shift...] + symbols[..<shift])
     }
 }
