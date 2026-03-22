@@ -62,17 +62,17 @@ enum CharacterType: CaseIterable {
     private func cloudAssetBaseName(for expression: ExpressionType) -> String {
         switch expression {
         case .idle:
-            return "well_starter_idle"
+            return "well_idle"
         case .focus:
             return "well_focus"
         case .shortBreak:
-            return "well_break_on"
+            return "well_break"
         case .longBreak:
-            return "well_long_break"
+            return "well_sleep"
         case .breakStarting:
-            return "well_break_notification"
+            return "well_break_alert"
         case .noBreakWarning:
-            return "well_break_reminder"
+            return "well_angry"
         }
     }
 }
