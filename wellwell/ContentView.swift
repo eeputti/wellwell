@@ -24,6 +24,7 @@ struct ContentView: View {
                 }
 
                 cloudCard
+                consistencyCard
                 timerCard
                 if vm.showPostSessionFlow && vm.state == .waitingForBreakConfirmation {
                     postSessionCard
@@ -131,6 +132,10 @@ struct ContentView: View {
                 .foregroundStyle(.black.opacity(0.54))
 
             timerActionButtons
+
+            if vm.state == .idle {
+                intentionField
+            }
         }
         .padding(22)
         .frame(maxWidth: .infinity)

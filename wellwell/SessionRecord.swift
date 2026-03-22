@@ -11,6 +11,7 @@ struct SessionRecord: Codable, Identifiable, Equatable {
     let id: UUID
     let completedAt: Date
     let focusSeconds: Int
+    var intention: String?
     var reflectionWorkSummary: String?
     var reflectionProductivity: ReflectionProductivity?
     var reflectionFeeling: Int?
@@ -19,6 +20,7 @@ struct SessionRecord: Codable, Identifiable, Equatable {
         id: UUID = UUID(),
         completedAt: Date = Date(),
         focusSeconds: Int,
+        intention: String? = nil,
         reflectionWorkSummary: String? = nil,
         reflectionProductivity: ReflectionProductivity? = nil,
         reflectionFeeling: Int? = nil
@@ -26,6 +28,7 @@ struct SessionRecord: Codable, Identifiable, Equatable {
         self.id = id
         self.completedAt = completedAt
         self.focusSeconds = max(60, focusSeconds)
+        self.intention = intention?.trimmingCharacters(in: .whitespacesAndNewlines)
         self.reflectionWorkSummary = reflectionWorkSummary
         self.reflectionProductivity = reflectionProductivity
         self.reflectionFeeling = reflectionFeeling

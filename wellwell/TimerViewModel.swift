@@ -329,6 +329,12 @@ final class TimerViewModel: ObservableObject {
         return sessionHistory.filter { calendar.isDateInToday($0.completedAt) }.count
     }
 
+    var thisWeekSessionCount: Int {
+        let calendar = Calendar.current
+        guard let weekInterval = calendar.dateInterval(of: .weekOfYear, for: Date()) else { return 0 }
+        return sessionHistory.filter { weekInterval.contains($0.completedAt) }.count
+    }
+
     var reflectionCompletionRate: Int {
         guard !sessionHistory.isEmpty else { return 0 }
         let reflectedCount = sessionHistory.filter {
@@ -354,6 +360,18 @@ final class TimerViewModel: ObservableObject {
             return "mixed productivity"
         }
         return "often low productivity"
+    }
+
+    var recentIntentions: [String] {
+        var seen = Set<String>()
+        return sessionHistory
+            .reversed()
+            .compactMap(\.intention)
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .filter { seen.insert($0.lowercased()).inserted }
+            .prefix(3)
+            .map { $0 }
     }
 
     var averageFeelingScore: Double? {
@@ -399,7 +417,11 @@ final class TimerViewModel: ObservableObject {
     }
 
     private func registerCompletedPomodoro() {
-        let record = SessionRecord(focusSeconds: focusDuration)
+        let trimmedIntention = sessionIntentionDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+        let record = SessionRecord(
+            focusSeconds: focusDuration,
+            intention: trimmedIntention.isEmpty ? nil : trimmedIntention
+        )
         sessionHistory.append(record)
         latestCompletedSessionID = record.id
         pendingReflectionSessionID = nil
