@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject var vm: TimerViewModel
+    @AppStorage("selectedCharacterFamily") private var selectedCharacterFamilyValue = CharacterType.cloud.storedValue
 
     var body: some View {
         ZStack {
@@ -29,9 +30,11 @@ struct ContentView: View {
                 SpeechBubbleView(text: bubbleText)
                     .transition(.opacity.combined(with: .scale))
                     .animation(.easeInOut(duration: 0.25), value: bubbleText)
-                Image(characterImageName)
-                    .resizable()
-                    .scaledToFit()
+                CharacterView(
+                    character: selectedCharacterFamily,
+                    expression: currentExpression,
+                    isLocked: false
+                )
                     .frame(width: 220, height: 160)
 
                 Text(vm.formattedTime())
@@ -120,23 +123,27 @@ struct ContentView: View {
         }
     }
 
-    private var characterImageName: String {
+    private var currentExpression: ExpressionType {
         switch vm.state {
         case .idle:
-            return "well_idle"
+            return .idle
         case .focusRunning:
-            return "well_focus"
+            return .focus
         case .waitingForBreakConfirmation:
-            return "well_break_alert"
+            return .breakStarting
         case .breakRunning:
-            return "well_break"
+            return .shortBreak
         case .waitingForWorkConfirmation:
-            return "well_focus"
+            return .focus
         case .overdueBreak:
-            return "well_angry"
+            return .noBreakWarning
         case .overdueWork:
-            return "well_sleep"
+            return .longBreak
         }
+    }
+
+    private var selectedCharacterFamily: CharacterType {
+        CharacterType(storedValue: selectedCharacterFamilyValue)
     }
 
     private var settingsPanel: some View {

@@ -15,16 +15,12 @@ struct CharacterView: View {
 
     @State private var floatUp = false
 
-    private var characterKey: String {
-        String(describing: character).lowercased()
-    }
-
     private var expressionKey: String {
         String(describing: expression).lowercased()
     }
 
     private var imageName: String {
-        "\(characterKey)_\(expressionKey)"
+        character.assetName(for: expression)
     }
 
     private var isIdleExpression: Bool {
