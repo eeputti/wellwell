@@ -41,6 +41,19 @@ struct SessionHistoryView: View {
                                         .foregroundStyle(.black.opacity(0.62))
                                         .lineLimit(2)
                                 }
+
+                                if let summary = session.reflectionWorkSummary, !summary.isEmpty {
+                                    Text("done: \(summary)")
+                                        .font(.subheadline)
+                                        .foregroundStyle(.black.opacity(0.62))
+                                        .lineLimit(3)
+                                }
+
+                                if let focusScore = session.reflectionFocusScore {
+                                    Text("focus feeling: \(focusScore)/5")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
                             }
                             .padding(.vertical, 2)
                         }

@@ -81,9 +81,9 @@ struct ContentView: View {
             )
         ) {
             ReflectionSheetView(
-                onSave: { work, productivity, feeling in
+                onSave: { work, focusScore in
                     guard let sessionID = vm.pendingReflectionSessionID else { return }
-                    vm.saveReflection(for: sessionID, workSummary: work, productivity: productivity, feeling: feeling)
+                    vm.saveReflection(for: sessionID, workSummary: work, focusScore: focusScore)
                 },
                 onSkip: {
                     vm.skipReflection()
@@ -372,7 +372,7 @@ struct ContentView: View {
             if vm.streakDays >= 3 {
                 return "you showed up today. quietly proud of you."
             }
-            if vm.mostRecentReflectionProductivity == .low {
+            if let lastFocusScore = vm.mostRecentFocusScore, lastFocusScore <= 2 {
                 return "it’s okay. a short session still counts."
             }
             return "ready for another gentle round?"
