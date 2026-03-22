@@ -66,6 +66,25 @@ struct StatsView: View {
                             .fill(Color.white.opacity(0.84))
                     )
 
+                    if !vm.recentIntentions.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("recent intentions")
+                                .font(.headline)
+                            ForEach(vm.recentIntentions, id: \.self) { intention in
+                                Text("• \(intention)")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.black.opacity(0.68))
+                                    .lineLimit(2)
+                            }
+                        }
+                        .padding(14)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(Color.white.opacity(0.84))
+                        )
+                    }
+
                     Spacer(minLength: 0)
                 }
                 .padding(24)

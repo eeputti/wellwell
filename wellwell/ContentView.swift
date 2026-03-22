@@ -24,6 +24,7 @@ struct ContentView: View {
                 }
 
                 cloudCard
+                consistencyCard
                 timerCard
 
                 Spacer(minLength: 0)
@@ -128,11 +129,71 @@ struct ContentView: View {
                 .foregroundStyle(.black.opacity(0.54))
 
             timerActionButtons
+
+            if vm.state == .idle {
+                intentionField
+            }
         }
         .padding(22)
         .frame(maxWidth: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 24)
+                .fill(Color.white.opacity(0.82))
+        )
+    }
+
+    private var consistencyCard: some View {
+        HStack(spacing: 10) {
+            compactMetric(title: "streak", value: "\(vm.streakDays)d")
+            compactMetric(title: "this week", value: "\(vm.thisWeekSessionCount)")
+            compactMetric(title: "today focus", value: "\(vm.todayFocusMinutes)m")
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: 18)
+                .fill(Color.white.opacity(0.72))
+        )
+    }
+
+    private var intentionField: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("what are you focusing on?")
+                .font(.subheadline)
+                .foregroundStyle(.black.opacity(0.58))
+
+            TextField("optional", text: $vm.sessionIntentionDraft, axis: .vertical)
+                .textFieldStyle(.plain)
+                .lineLimit(1...2)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 8)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color.white.opacity(0.88))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(Color.black.opacity(0.08), lineWidth: 1)
+                )
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, 4)
+    }
+
+    private func compactMetric(title: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(title)
+                .font(.caption)
+                .foregroundStyle(.black.opacity(0.5))
+            Text(value)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.black.opacity(0.76))
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
                 .fill(Color.white.opacity(0.82))
         )
     }
