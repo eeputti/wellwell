@@ -19,9 +19,39 @@ struct MenuBarContentView: View {
     @AppStorage("selectedCloudColor") private var selectedCloudColorValue = CloudColor.default.storedValue
     @State private var showPaywall = false
     @State private var showProSettings = false
+    @State private var showStats = false
+    @State private var showSettings = false
 
     var body: some View {
         VStack(spacing: 14) {
+            HStack {
+                Text("Focus Time")
+                    .font(.headline.weight(.semibold))
+                Spacer()
+                Menu {
+                    Button("settings") {
+                        showSettings = true
+                    }
+                    Button("stats") {
+                        showStats = true
+                    }
+                    Divider()
+                    Button("open main window") {
+                        openWindow(id: "main")
+                    }
+                    if vm.state != .idle {
+                        Button("reset timer") {
+                            vm.resetTimer()
+                        }
+                    }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                        .font(.title3.weight(.semibold))
+                }
+                .menuStyle(.borderlessButton)
+                .fixedSize()
+            }
+
             CharacterView(
                 character: selectedCharacterFamily,
                 expression: currentExpression,
@@ -37,6 +67,11 @@ struct MenuBarContentView: View {
             Text(statusText)
                 .font(.headline)
                 .foregroundStyle(.secondary)
+
+            Button(primaryActionTitle) {
+                handlePrimaryAction()
+            }
+            .buttonStyle(.borderedProminent)
             
             if vm.state == .idle {
                 VStack(alignment: .leading, spacing: 4) {
@@ -139,6 +174,14 @@ struct MenuBarContentView: View {
         }
         .sheet(isPresented: $showProSettings) {
             ProSessionSettingsView()
+                .environmentObject(vm)
+        }
+        .sheet(isPresented: $showStats) {
+            StatsView()
+                .environmentObject(vm)
+        }
+        .sheet(isPresented: $showSettings) {
+            TimerSettingsView()
                 .environmentObject(vm)
         }
     }
@@ -272,6 +315,36 @@ struct MenuBarContentView: View {
                 in: Double(range.lowerBound)...Double(range.upperBound),
                 step: 1
             )
+        }
+    }
+
+    private var primaryActionTitle: String {
+        switch vm.state {
+        case .idle:
+            return "start"
+        case .focusRunning, .breakRunning:
+            return vm.isPaused ? "go!" : "pause"
+        case .waitingForBreakConfirmation, .overdueBreak:
+            return "start"
+        case .waitingForWorkConfirmation, .overdueWork:
+            return "go!"
+        }
+    }
+
+    private func handlePrimaryAction() {
+        switch vm.state {
+        case .idle:
+            vm.startWork()
+        case .focusRunning, .breakRunning:
+            if vm.isPaused {
+                vm.continuePausedSession()
+            } else {
+                vm.pauseCurrentSession()
+            }
+        case .waitingForBreakConfirmation, .overdueBreak:
+            vm.startBreak()
+        case .waitingForWorkConfirmation, .overdueWork:
+            vm.resumeWork()
         }
     }
 }
