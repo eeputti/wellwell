@@ -84,6 +84,15 @@ enum CloudColor: CaseIterable, Equatable {
     case pink
     case red
 
+    var isPremium: Bool {
+        switch self {
+        case .pink, .red:
+            return true
+        default:
+            return false
+        }
+    }
+
     var storedValue: String {
         switch self {
         case .default: return "default"

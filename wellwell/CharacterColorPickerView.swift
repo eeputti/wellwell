@@ -12,34 +12,32 @@ struct CharacterColorPickerView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("choose your cloud")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
-
-            HStack(spacing: spacing) {
-                ForEach(CloudColor.allCases, id: \.storedValue) { color in
-                    let isSelected = selectedCloudColor == color
-
-                    Button {
-                        selectedCloudColorValue = color.storedValue
-                    } label: {
-                        Circle()
-                            .fill(swatchColor(for: color))
-                            .frame(width: swatchSize, height: swatchSize)
-                            .shadow(color: .black.opacity(0.12), radius: 3, y: 1)
-                            .overlay(
-                                Circle()
-                                    .stroke(
-                                        isSelected ? selectedBorderColor : unselectedBorderColor,
-                                        lineWidth: isSelected ? 2.5 : 1
-                                    )
-                            )
-                            .scaleEffect(isSelected ? 1.08 : 1)
-                            .animation(.spring(response: 0.25, dampingFraction: 0.75), value: selectedCloudColorValue)
-                    }
-                    .buttonStyle(.plain)
+        HStack(spacing: spacing) {
+            ForEach(CloudColor.allCases, id: \.storedValue) { color in
+                Button {
+                    selectedCloudColorValue = color.storedValue
+                } label: {
+                    Circle()
+                        .fill(swatchColor(for: color))
+                        .frame(width: swatchSize, height: swatchSize)
+                        .overlay(
+                            Circle()
+                                .stroke(
+                                    selectedCloudColor == color ? selectedBorderColor : unselectedBorderColor,
+                                    lineWidth: 2
+                                )
+                        )
+                        .overlay {
+                            if color.isPremium {
+                                Image(systemName: "lock.fill")
+                                    .font(.system(size: swatchSize * 0.45, weight: .bold))
+                                    .foregroundStyle(.white)
+                            }
+                        }
+                        .opacity(color.isPremium ? 0.65 : 1)
                 }
+                .buttonStyle(.plain)
+                .disabled(color.isPremium)
             }
         }
     }
