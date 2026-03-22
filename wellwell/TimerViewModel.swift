@@ -42,6 +42,7 @@ final class TimerViewModel: ObservableObject {
     @Published var sessionsUntilLongBreak: Int = 4
     @Published var longBreakMinutes: Int = 15
     @Published private(set) var completedFocusSessions: Int = 0
+    @Published var pendingReflectionSessionID: UUID?
     var isUpcomingBreakLong: Bool = false
 
     var focusDuration: Int {
@@ -317,6 +318,44 @@ final class TimerViewModel: ObservableObject {
         }
     }
 
+    var todaySessionCount: Int {
+        let calendar = Calendar.current
+        return sessionHistory.filter { calendar.isDateInToday($0.completedAt) }.count
+    }
+
+    var reflectionCompletionRate: Int {
+        guard !sessionHistory.isEmpty else { return 0 }
+        let reflectedCount = sessionHistory.filter {
+            ($0.reflectionWorkSummary?.isEmpty == false) || $0.reflectionProductivity != nil || $0.reflectionFeeling != nil
+        }.count
+        return Int((Double(reflectedCount) / Double(sessionHistory.count) * 100).rounded())
+    }
+
+    var productivitySummaryText: String {
+        let grouped = Dictionary(grouping: sessionHistory.compactMap(\.reflectionProductivity), by: { $0 })
+        let high = grouped[.high]?.count ?? 0
+        let okay = grouped[.okay]?.count ?? 0
+        let low = grouped[.low]?.count ?? 0
+
+        if high == 0 && okay == 0 && low == 0 {
+            return "no reflection data yet"
+        }
+
+        if high >= okay && high >= low {
+            return "mostly productive"
+        }
+        if okay >= low {
+            return "mixed productivity"
+        }
+        return "often low productivity"
+    }
+
+    var averageFeelingScore: Double? {
+        let values = sessionHistory.compactMap(\.reflectionFeeling)
+        guard !values.isEmpty else { return nil }
+        return Double(values.reduce(0, +)) / Double(values.count)
+    }
+
     private func sanitized(_ value: Int, fallback: Int, range: ClosedRange<Int>) -> Int {
         guard value > 0 else { return fallback }
         return min(max(value, range.lowerBound), range.upperBound)
@@ -356,10 +395,33 @@ final class TimerViewModel: ObservableObject {
     private func registerCompletedPomodoro() {
         let record = SessionRecord(focusSeconds: focusDuration)
         sessionHistory.append(record)
+        pendingReflectionSessionID = record.id
         trimHistory()
         saveSessionHistory()
         streakDays = calculateStreakDays(from: sessionHistory)
         streakMood = mood(for: streakDays)
+    }
+
+    func saveReflection(
+        for sessionID: UUID,
+        workSummary: String,
+        productivity: ReflectionProductivity,
+        feeling: Int?
+    ) {
+        guard let index = sessionHistory.firstIndex(where: { $0.id == sessionID }) else {
+            pendingReflectionSessionID = nil
+            return
+        }
+
+        sessionHistory[index].reflectionWorkSummary = workSummary.trimmingCharacters(in: .whitespacesAndNewlines)
+        sessionHistory[index].reflectionProductivity = productivity
+        sessionHistory[index].reflectionFeeling = feeling
+        saveSessionHistory()
+        pendingReflectionSessionID = nil
+    }
+
+    func skipReflection() {
+        pendingReflectionSessionID = nil
     }
 
     private func trimHistory() {
