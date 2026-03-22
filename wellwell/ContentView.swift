@@ -273,18 +273,6 @@ struct ContentView: View {
             Text("take an earned break")
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(.black.opacity(0.7))
-
-            HStack(spacing: 10) {
-                Button("take an earned break") {
-                    vm.declineAnotherSession()
-                }
-                .buttonStyle(MainButtonStyle())
-
-                Button("continue session at your own risk") {
-                    vm.continueWithAnotherSession()
-                }
-                .buttonStyle(SecondaryButtonStyle())
-            }
         }
         .padding(18)
         .frame(maxWidth: .infinity)
@@ -296,6 +284,24 @@ struct ContentView: View {
 
     @ViewBuilder
     private var timerActionButtons: some View {
+        if vm.state == .focusRunning || vm.state == .breakRunning {
+            Button(vm.isPaused ? "go!" : "pause") {
+                if vm.isPaused {
+                    vm.continuePausedSession()
+                } else {
+                    vm.pauseCurrentSession()
+                }
+            }
+            .buttonStyle(MainButtonStyle())
+        }
+
+        if vm.state == .focusRunning {
+            Button("take an earned break") {
+                vm.startBreak()
+            }
+            .buttonStyle(SecondaryButtonStyle())
+        }
+
         if vm.state == .idle {
             Button("let’s begin") {
                 startSessionWithRitual()
