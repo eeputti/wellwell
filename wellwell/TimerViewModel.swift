@@ -419,10 +419,10 @@ final class TimerViewModel: ObservableObject {
         sessionHistory.last
     }
 
-    var mostRecentFocusScore: Int? {
+    var mostRecentReflectionProductivity: ReflectionProductivity? {
         sessionHistory
             .reversed()
-            .compactMap(\.reflectionFocusScore)
+            .compactMap(\.reflectionProductivity)
             .first
     }
 
@@ -458,9 +458,28 @@ final class TimerViewModel: ObservableObject {
     var reflectionCompletionRate: Int {
         guard !sessionHistory.isEmpty else { return 0 }
         let reflectedCount = sessionHistory.filter {
-            ($0.reflectionWorkSummary?.isEmpty == false) || $0.reflectionFocusScore != nil
+            ($0.reflectionWorkSummary?.isEmpty == false) || $0.reflectionProductivity != nil || $0.reflectionFeeling != nil
         }.count
         return Int((Double(reflectedCount) / Double(sessionHistory.count) * 100).rounded())
+    }
+
+    var productivitySummaryText: String {
+        let grouped = Dictionary(grouping: sessionHistory.compactMap(\.reflectionProductivity), by: { $0 })
+        let high = grouped[.high]?.count ?? 0
+        let okay = grouped[.okay]?.count ?? 0
+        let low = grouped[.low]?.count ?? 0
+
+        if high == 0 && okay == 0 && low == 0 {
+            return "no reflection data yet"
+        }
+
+        if high >= okay && high >= low {
+            return "mostly productive"
+        }
+        if okay >= low {
+            return "mixed productivity"
+        }
+        return "often low productivity"
     }
 
     var recentIntentions: [String] {
@@ -475,8 +494,8 @@ final class TimerViewModel: ObservableObject {
             .map { $0 }
     }
 
-    var averageFocusScore: Double? {
-        let values = sessionHistory.compactMap(\.reflectionFocusScore)
+    var averageFeelingScore: Double? {
+        let values = sessionHistory.compactMap(\.reflectionFeeling)
         guard !values.isEmpty else { return nil }
         return Double(values.reduce(0, +)) / Double(values.count)
     }
@@ -664,7 +683,8 @@ final class TimerViewModel: ObservableObject {
     func saveReflection(
         for sessionID: UUID,
         workSummary: String,
-        focusScore: Int
+        productivity: ReflectionProductivity,
+        feeling: Int?
     ) {
         guard let index = sessionHistory.firstIndex(where: { $0.id == sessionID }) else {
             pendingReflectionSessionID = nil
@@ -672,7 +692,8 @@ final class TimerViewModel: ObservableObject {
         }
 
         sessionHistory[index].reflectionWorkSummary = workSummary.trimmingCharacters(in: .whitespacesAndNewlines)
-        sessionHistory[index].reflectionFocusScore = min(max(focusScore, 1), 5)
+        sessionHistory[index].reflectionProductivity = productivity
+        sessionHistory[index].reflectionFeeling = feeling
         saveSessionHistory()
         pendingReflectionSessionID = nil
     }

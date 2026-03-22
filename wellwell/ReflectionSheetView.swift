@@ -1,39 +1,36 @@
 import SwiftUI
 
 struct ReflectionSheetView: View {
-    let onSave: (String, Int) -> Void
+    let onSave: (String, ReflectionProductivity, Int?) -> Void
     let onSkip: () -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var workText = ""
-    @State private var focusScore = 3
+    @State private var productivity: ReflectionProductivity = .okay
+    @State private var feeling = 2
+    @State private var includeFeeling = false
 
     var body: some View {
         NavigationStack {
             Form {
                 Section("quick reflection") {
-                    TextField("what did you get done? (optional)", text: $workText, axis: .vertical)
-                        .lineLimit(2...4)
+                    TextField("what did you focus on?", text: $workText)
 
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("how focused did it feel?")
-                            .font(.subheadline.weight(.medium))
-                        Picker("focus score", selection: $focusScore) {
+                    Picker("how did it feel?", selection: $productivity) {
+                        ForEach(ReflectionProductivity.allCases) { value in
+                            Text(value.label).tag(value)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+
+                    Toggle("add a quick feeling check", isOn: $includeFeeling)
+                    if includeFeeling {
+                        Picker("feeling", selection: $feeling) {
                             Text("1").tag(1)
                             Text("2").tag(2)
                             Text("3").tag(3)
-                            Text("4").tag(4)
-                            Text("5").tag(5)
                         }
                         .pickerStyle(.segmented)
-
-                        HStack {
-                            Text("hard to focus")
-                            Spacer()
-                            Text("fully focused")
-                        }
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
                     }
                 }
             }
@@ -47,7 +44,7 @@ struct ReflectionSheetView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("save") {
-                        onSave(workText, focusScore)
+                        onSave(workText, productivity, includeFeeling ? feeling : nil)
                         dismiss()
                     }
                 }

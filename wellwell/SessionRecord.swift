@@ -15,7 +15,6 @@ struct SessionRecord: Codable, Identifiable, Equatable {
     var reflectionWorkSummary: String?
     var reflectionProductivity: ReflectionProductivity?
     var reflectionFeeling: Int?
-    var reflectionFocusScore: Int?
 
     init(
         id: UUID = UUID(),
@@ -24,8 +23,7 @@ struct SessionRecord: Codable, Identifiable, Equatable {
         intention: String? = nil,
         reflectionWorkSummary: String? = nil,
         reflectionProductivity: ReflectionProductivity? = nil,
-        reflectionFeeling: Int? = nil,
-        reflectionFocusScore: Int? = nil
+        reflectionFeeling: Int? = nil
     ) {
         self.id = id
         self.completedAt = completedAt
@@ -34,11 +32,6 @@ struct SessionRecord: Codable, Identifiable, Equatable {
         self.reflectionWorkSummary = reflectionWorkSummary
         self.reflectionProductivity = reflectionProductivity
         self.reflectionFeeling = reflectionFeeling
-        if let reflectionFocusScore {
-            self.reflectionFocusScore = min(max(reflectionFocusScore, 1), 5)
-        } else {
-            self.reflectionFocusScore = nil
-        }
     }
 }
 
