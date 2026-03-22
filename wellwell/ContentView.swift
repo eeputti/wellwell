@@ -9,8 +9,19 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject var vm: TimerViewModel
+    @EnvironmentObject var purchaseManager: PurchaseManager
     @AppStorage("selectedCharacterFamily") private var selectedCharacterFamilyValue = CharacterType.cloud.storedValue
     @AppStorage("selectedCloudColor") private var selectedCloudColorValue = CloudColor.default.storedValue
+    @State private var selectedTab: HomeTab = .timer
+    @State private var showPaywall = false
+
+    private enum HomeTab: String, CaseIterable, Identifiable {
+        case timer
+        case stats
+
+        var id: String { rawValue }
+        var title: String { rawValue }
+    }
 
     var body: some View {
         ZStack {
@@ -23,6 +34,39 @@ struct ContentView: View {
                     .fontWeight(.semibold)
                     .foregroundStyle(.black.opacity(0.7))
 
+                Picker("view", selection: $selectedTab) {
+                    ForEach(HomeTab.allCases) { tab in
+                        Text(tab.title).tag(tab)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .frame(maxWidth: 280)
+
+                if selectedTab == .timer {
+                    timerPanel
+                } else {
+                    StatsView()
+                        .environmentObject(vm)
+                        .environmentObject(purchaseManager)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+            }
+            .frame(minWidth: 560, minHeight: 560)
+            .padding(32)
+        }
+        .onAppear {
+            vm.triggerOpeningReaction()
+        }
+        .sheet(isPresented: $showPaywall) {
+            ProPaywallView()
+                .environmentObject(purchaseManager)
+        }
+        .animation(.easeInOut(duration: 0.25), value: vm.showStreakReaction)
+    }
+
+    private var timerPanel: some View {
+        VStack(spacing: 24) {
+
                 if vm.showStreakReaction {
                     StreakReactionView(streakDays: vm.streakDays, mood: vm.streakMood)
                         .transition(.opacity.combined(with: .scale))
@@ -31,13 +75,13 @@ struct ContentView: View {
                 SpeechBubbleView(text: bubbleText)
                     .transition(.opacity.combined(with: .scale))
                     .animation(.easeInOut(duration: 0.25), value: bubbleText)
+
                 CharacterView(
                     character: selectedCharacterFamily,
                     expression: currentExpression,
-                    cloudColor: selectedCloudColor,
                     isLocked: false
                 )
-                    .frame(width: 220, height: 160)
+                .frame(width: 220, height: 160)
 
                 Text(vm.formattedTime())
                     .font(.system(size: 80, weight: .light, design: .rounded))
@@ -49,6 +93,7 @@ struct ContentView: View {
                     .foregroundStyle(.black.opacity(0.55))
 
                 if vm.state == .idle {
+                    idleCompanionPanel
                     settingsPanel
 
                     Button("start work") {
@@ -77,14 +122,7 @@ struct ContentView: View {
                     }
                     .buttonStyle(MainButtonStyle())
                 }
-            }
-            .frame(minWidth: 480, minHeight: 520)
-            .padding(40)
         }
-        .onAppear {
-            vm.triggerOpeningReaction()
-        }
-        .animation(.easeInOut(duration: 0.25), value: vm.showStreakReaction)
     }
 
     private var statusText: String {
@@ -230,6 +268,32 @@ struct ContentView: View {
                 .fill(Color.white.opacity(0.82))
         )
         .frame(maxWidth: 360)
+    }
+
+    private var characterPicker: some View {
+        HStack(spacing: 10) {
+            ForEach(CharacterType.allCases, id: \.storedValue) { character in
+                Button {
+                    selectedCharacterFamilyValue = character.storedValue
+                } label: {
+                    CharacterView(
+                        character: character,
+                        expression: .idle,
+                        cloudColor: selectedCloudColor,
+                        isLocked: false
+                    )
+                    .frame(width: 42, height: 32)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(
+                                selectedCharacterFamily == character ? Color.black.opacity(0.7) : Color.clear,
+                                lineWidth: 2
+                            )
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+        }
     }
 
     private func timerSliderRow(title: String, value: Binding<Int>, range: ClosedRange<Int>) -> some View {

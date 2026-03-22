@@ -15,7 +15,7 @@ final class TimerViewModel: ObservableObject {
         case excited
         case golden
     }
-    
+
     enum SessionState {
         case idle
         case focusRunning
@@ -25,17 +25,18 @@ final class TimerViewModel: ObservableObject {
         case overdueBreak
         case overdueWork
     }
-    
+
     @Published var state: SessionState = .idle
     @Published var timeRemaining: Int = 25 * 60
     @Published var showStreakReaction: Bool = false
     @Published var streakDays: Int = 0
     @Published var streakMood: StreakMood = .happy
+    @Published private(set) var sessionHistory: [SessionRecord] = []
     
     private var timer: Timer?
     private var overdueTimer: Timer?
     private let overdueInterval: TimeInterval = 120
-    
+
     @Published var focusMinutes: Int = 25
     @Published var breakMinutes: Int = 5
     @Published var sessionsUntilLongBreak: Int = 4
@@ -68,11 +69,12 @@ final class TimerViewModel: ObservableObject {
         static let breakMinutes = "breakMinutes"
         static let sessionsUntilLongBreak = "sessionsUntilLongBreak"
         static let longBreakMinutes = "longBreakMinutes"
+        static let sessionHistory = "sessionHistory"
     }
 
     private let defaults: UserDefaults
     private var cancellables = Set<AnyCancellable>()
-    
+
     private var safeSessionsUntilLongBreak: Int {
         max(1, sessionsUntilLongBreak)
     }
@@ -106,6 +108,7 @@ final class TimerViewModel: ObservableObject {
                 self?.savePositive(value, forKey: DefaultsKeys.longBreakMinutes, fallback: 15)
             }
             .store(in: &cancellables)
+
     }
 
     private func resetIfIdle() {
@@ -119,41 +122,41 @@ final class TimerViewModel: ObservableObject {
         clearOverdueState()
         cancelAllFollowUps()
         stopTimer()
-        
+
         state = .focusRunning
         timeRemaining = focusDuration
-        
+
         SoundManager.shared.playOneShot(name: "well_start_timer")
-        
+
         startTimer()
     }
-    
+
     func startBreak() {
         stopAllSounds()
         clearOverdueState()
         cancelAllFollowUps()
         stopTimer()
-        
+
         state = .breakRunning
         timeRemaining = isUpcomingBreakLong ? longBreakDuration : breakDuration
-        
+
         startTimer()
     }
-    
+
     func resumeWork() {
         stopAllSounds()
         clearOverdueState()
         cancelAllFollowUps()
         stopTimer()
-        
+
         state = .focusRunning
         timeRemaining = focusDuration
-        
+
         SoundManager.shared.playOneShot(name: "well_start_timer")
-        
+
         startTimer()
     }
-    
+
     private func startTimer() {
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
             DispatchQueue.main.async {
@@ -161,33 +164,33 @@ final class TimerViewModel: ObservableObject {
             }
         }
     }
-    
+
     private func stopTimer() {
         timer?.invalidate()
         timer = nil
     }
-    
+
     private func tick() {
         guard timeRemaining > 0 else {
             handleTimerFinished()
             return
         }
-        
+
         timeRemaining -= 1
     }
-    
+
     private func handleTimerFinished() {
         stopTimer()
-        
+
         switch state {
         case .focusRunning:
             completedFocusSessions += 1
             isUpcomingBreakLong = completedFocusSessions % safeSessionsUntilLongBreak == 0
             state = .waitingForBreakConfirmation
             registerCompletedPomodoro()
-            
+
             SoundManager.shared.playOneShot(name: "well_focus_done")
-            
+
             NotificationManager.shared.notifyFocusEnded()
             NotificationManager.shared.cancelBreakFollowUp()
             NotificationManager.shared.scheduleBreakFollowUp(after: overdueInterval)
@@ -199,16 +202,16 @@ final class TimerViewModel: ObservableObject {
                     SoundManager.shared.playLoop(name: "well_angry")
                 }
             }
-            
+
         case .breakRunning:
             state = .waitingForWorkConfirmation
             if isUpcomingBreakLong {
                 completedFocusSessions = 0
             }
             isUpcomingBreakLong = false
-            
+
             SoundManager.shared.playOneShot(name: "well_break")
-            
+
             NotificationManager.shared.notifyBreakEnded()
             NotificationManager.shared.cancelWorkFollowUp()
             NotificationManager.shared.scheduleWorkFollowUp(after: overdueInterval)
@@ -220,12 +223,11 @@ final class TimerViewModel: ObservableObject {
                     SoundManager.shared.playLoop(name: "well_back_to_work")
                 }
             }
-            
+
         default:
             break
         }
     }
-    
 
     private func scheduleOverdueTimer(after seconds: TimeInterval, action: @escaping () -> Void) {
         clearOverdueState()
@@ -250,16 +252,16 @@ final class TimerViewModel: ObservableObject {
         SoundManager.shared.stop()
     }
 
-    private func registerCompletedPomodoro() {}
-
     func triggerOpeningReaction() {
         guard !showStreakReaction else { return }
+        streakDays = calculateStreakDays(from: sessionHistory)
+        streakMood = mood(for: streakDays)
         showStreakReaction = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) { [weak self] in
             self?.showStreakReaction = false
         }
     }
-    
+
     func formattedTime() -> String {
         let minutes = timeRemaining / 60
         let seconds = timeRemaining % 60
@@ -281,7 +283,38 @@ final class TimerViewModel: ObservableObject {
         breakMinutes = sanitized(defaults.integer(forKey: DefaultsKeys.breakMinutes), fallback: 5, range: 1...60)
         sessionsUntilLongBreak = sanitized(defaults.integer(forKey: DefaultsKeys.sessionsUntilLongBreak), fallback: 4, range: 1...12)
         longBreakMinutes = sanitized(defaults.integer(forKey: DefaultsKeys.longBreakMinutes), fallback: 15, range: 1...90)
+        sessionHistory = loadSessionHistory()
         timeRemaining = focusDuration
+    }
+
+    var totalCompletedSessions: Int {
+        sessionHistory.count
+    }
+
+    var totalFocusMinutesAllTime: Int {
+        sessionHistory.reduce(0) { $0 + ($1.focusSeconds / 60) }
+    }
+
+    var todayFocusMinutes: Int {
+        let calendar = Calendar.current
+        return sessionHistory
+            .filter { calendar.isDateInToday($0.completedAt) }
+            .reduce(0) { $0 + ($1.focusSeconds / 60) }
+    }
+
+    var weeklyFocusSummary: [(dayLabel: String, minutes: Int)] {
+        let calendar = Calendar.current
+        let today = Date()
+        return (0..<7).map { offset in
+            let date = calendar.date(byAdding: .day, value: -(6 - offset), to: today) ?? today
+            let dayStart = calendar.startOfDay(for: date)
+            let nextDay = calendar.date(byAdding: .day, value: 1, to: dayStart) ?? dayStart
+            let minutes = sessionHistory
+                .filter { $0.completedAt >= dayStart && $0.completedAt < nextDay }
+                .reduce(0) { $0 + ($1.focusSeconds / 60) }
+            let dayLabel = date.formatted(.dateTime.weekday(.abbreviated))
+            return (dayLabel, minutes)
+        }
     }
 
     private func sanitized(_ value: Int, fallback: Int, range: ClosedRange<Int>) -> Int {
@@ -318,5 +351,63 @@ final class TimerViewModel: ObservableObject {
             }
         }
         defaults.set(sanitizedValue, forKey: key)
+    }
+
+    private func registerCompletedPomodoro() {
+        let record = SessionRecord(focusSeconds: focusDuration)
+        sessionHistory.append(record)
+        trimHistory()
+        saveSessionHistory()
+        streakDays = calculateStreakDays(from: sessionHistory)
+        streakMood = mood(for: streakDays)
+    }
+
+    private func trimHistory() {
+        guard sessionHistory.count > 730 else { return }
+        sessionHistory = Array(sessionHistory.suffix(730))
+    }
+
+    private func loadSessionHistory() -> [SessionRecord] {
+        guard let raw = defaults.data(forKey: DefaultsKeys.sessionHistory) else {
+            return []
+        }
+        return (try? JSONDecoder().decode([SessionRecord].self, from: raw)) ?? []
+    }
+
+    private func saveSessionHistory() {
+        guard let data = try? JSONEncoder().encode(sessionHistory) else { return }
+        defaults.set(data, forKey: DefaultsKeys.sessionHistory)
+    }
+
+    private func calculateStreakDays(from history: [SessionRecord]) -> Int {
+        let calendar = Calendar.current
+        let uniqueDays = Set(history.map { calendar.startOfDay(for: $0.completedAt) })
+        guard !uniqueDays.isEmpty else { return 0 }
+
+        let today = calendar.startOfDay(for: Date())
+        let includesToday = uniqueDays.contains(today)
+        var cursor = includesToday ? today : (calendar.date(byAdding: .day, value: -1, to: today) ?? today)
+        guard uniqueDays.contains(cursor) else { return 0 }
+
+        var streak = 0
+        while uniqueDays.contains(cursor) {
+            streak += 1
+            guard let previous = calendar.date(byAdding: .day, value: -1, to: cursor) else { break }
+            cursor = previous
+        }
+        return streak
+    }
+
+    private func mood(for streakDays: Int) -> StreakMood {
+        switch streakDays {
+        case 0...1:
+            return .sleepy
+        case 2...4:
+            return .happy
+        case 5...9:
+            return .excited
+        default:
+            return .golden
+        }
     }
 }

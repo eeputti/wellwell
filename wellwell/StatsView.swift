@@ -2,21 +2,8 @@ import SwiftUI
 import Charts
 
 struct StatsView: View {
+    @EnvironmentObject var vm: TimerViewModel
     @EnvironmentObject var purchaseManager: PurchaseManager
-
-    private let todayFocusMinutes = 135
-    private let currentStreakDays = 6
-    private let totalSessions = 148
-
-    private let weeklyData: [WeeklyFocusPoint] = [
-        WeeklyFocusPoint(day: "Mon", minutes: 90),
-        WeeklyFocusPoint(day: "Tue", minutes: 120),
-        WeeklyFocusPoint(day: "Wed", minutes: 75),
-        WeeklyFocusPoint(day: "Thu", minutes: 140),
-        WeeklyFocusPoint(day: "Fri", minutes: 110),
-        WeeklyFocusPoint(day: "Sat", minutes: 135),
-        WeeklyFocusPoint(day: "Sun", minutes: 80)
-    ]
 
     var body: some View {
         ZStack {
@@ -30,9 +17,9 @@ struct StatsView: View {
                     .foregroundStyle(.black.opacity(0.7))
 
                 HStack(spacing: 12) {
-                    statCard(title: "today's focus", value: "\(todayFocusMinutes)m")
-                    statCard(title: "streak", value: "\(currentStreakDays) days")
-                    statCard(title: "sessions", value: "\(totalSessions)")
+                    statCard(title: "today's focus", value: "\(vm.todayFocusMinutes)m")
+                    statCard(title: "streak", value: "\(vm.streakDays) days")
+                    statCard(title: "sessions", value: "\(vm.totalCompletedSessions)")
                 }
 
                 VStack(alignment: .leading, spacing: 10) {
@@ -71,11 +58,12 @@ struct StatsView: View {
     }
 
     private var displayedWeeklyData: [WeeklyFocusPoint] {
+        let allData = vm.weeklyFocusSummary.map { WeeklyFocusPoint(day: $0.dayLabel, minutes: $0.minutes) }
         if purchaseManager.isPro {
-            return weeklyData
+            return allData
         }
 
-        return Array(weeklyData.prefix(3))
+        return Array(allData.prefix(3))
     }
 
     private var historyLabel: String {

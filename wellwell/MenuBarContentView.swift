@@ -38,6 +38,7 @@ struct MenuBarContentView: View {
                 .foregroundStyle(.secondary)
             
             if vm.state == .idle {
+                idleCompanionPanel
                 settingsPanel
             }
             
@@ -185,6 +186,32 @@ struct MenuBarContentView: View {
             RoundedRectangle(cornerRadius: 10)
                 .fill(Color.primary.opacity(0.05))
         )
+    }
+
+    private var characterPicker: some View {
+        HStack(spacing: 6) {
+            ForEach(CharacterType.allCases, id: \.storedValue) { character in
+                Button {
+                    selectedCharacterFamilyValue = character.storedValue
+                } label: {
+                    CharacterView(
+                        character: character,
+                        expression: .idle,
+                        cloudColor: selectedCloudColor,
+                        isLocked: false
+                    )
+                    .frame(width: 26, height: 20)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 5)
+                            .stroke(
+                                selectedCharacterFamily == character ? Color.primary : Color.clear,
+                                lineWidth: 1.5
+                            )
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+        }
     }
 
     private var cloudColorPicker: some View {
