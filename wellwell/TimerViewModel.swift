@@ -31,7 +31,6 @@ final class TimerViewModel: ObservableObject {
     @Published var showStreakReaction: Bool = false
     @Published var streakDays: Int = 0
     @Published var streakMood: StreakMood = .happy
-    @Published var sessionLabel: String = ""
     @Published private(set) var sessionHistory: [SessionRecord] = []
     
     private var timer: Timer?
@@ -43,7 +42,6 @@ final class TimerViewModel: ObservableObject {
     @Published var sessionsUntilLongBreak: Int = 4
     @Published var longBreakMinutes: Int = 15
     @Published private(set) var completedFocusSessions: Int = 0
-    @Published private(set) var sessionHistory: [SessionRecord] = []
     var isUpcomingBreakLong: Bool = false
 
     var focusDuration: Int {
@@ -111,11 +109,6 @@ final class TimerViewModel: ObservableObject {
             }
             .store(in: &cancellables)
 
-        $sessionLabel
-            .sink { [weak self] value in
-                self?.defaults.set(value.trimmingCharacters(in: .whitespacesAndNewlines), forKey: DefaultsKeys.sessionLabel)
-            }
-            .store(in: &cancellables)
     }
 
     private func resetIfIdle() {
@@ -195,7 +188,6 @@ final class TimerViewModel: ObservableObject {
             isUpcomingBreakLong = completedFocusSessions % safeSessionsUntilLongBreak == 0
             state = .waitingForBreakConfirmation
             registerCompletedPomodoro()
-            appendRecentSession(type: .focus, durationMinutes: focusMinutes)
 
             SoundManager.shared.playOneShot(name: "well_focus_done")
 
@@ -212,15 +204,11 @@ final class TimerViewModel: ObservableObject {
             }
 
         case .breakRunning:
-            let breakType: SessionRecordType = isUpcomingBreakLong ? .longBreak : .shortBreak
-            let breakLength = isUpcomingBreakLong ? longBreakMinutes : breakMinutes
-
             state = .waitingForWorkConfirmation
             if isUpcomingBreakLong {
                 completedFocusSessions = 0
             }
             isUpcomingBreakLong = false
-            appendRecentSession(type: breakType, durationMinutes: breakLength)
 
             SoundManager.shared.playOneShot(name: "well_break")
 
@@ -239,27 +227,6 @@ final class TimerViewModel: ObservableObject {
         default:
             break
         }
-    }
-
-    private func appendRecentSession(type: SessionRecordType, durationMinutes: Int) {
-        let newRecord = SessionRecord(type: type, durationMinutes: durationMinutes)
-        recentSessions.insert(newRecord, at: 0)
-        recentSessions = Array(recentSessions.prefix(30))
-        saveRecentSessions()
-    }
-
-    private func saveRecentSessions() {
-        guard let encoded = try? JSONEncoder().encode(recentSessions) else { return }
-        defaults.set(encoded, forKey: DefaultsKeys.recentSessions)
-    }
-
-    private func loadRecentSessions() {
-        guard let data = defaults.data(forKey: DefaultsKeys.recentSessions),
-              let decoded = try? JSONDecoder().decode([SessionRecord].self, from: data) else {
-            recentSessions = []
-            return
-        }
-        recentSessions = decoded
     }
 
     private func scheduleOverdueTimer(after seconds: TimeInterval, action: @escaping () -> Void) {
