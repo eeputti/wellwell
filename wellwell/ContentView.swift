@@ -75,7 +75,7 @@ struct ContentView: View {
                     .font(.title2.weight(.semibold))
                     .foregroundStyle(.black.opacity(0.78))
 
-                Text("let's make this one calm and focused")
+                Text("let’s keep this one calm and simple")
                     .font(.subheadline)
                     .foregroundStyle(.black.opacity(0.55))
             }
@@ -87,18 +87,20 @@ struct ContentView: View {
                     showStats = true
                 }
                 .buttonStyle(SecondaryButtonStyle())
+                .keyboardShortcut("2", modifiers: [.command])
 
                 Button("settings") {
                     showSettings = true
                 }
                 .buttonStyle(SecondaryButtonStyle())
+                .keyboardShortcut(",", modifiers: [.command])
             }
         }
     }
 
     private var cloudCard: some View {
         VStack(spacing: 14) {
-            SpeechBubbleView(text: vm.state == .idle ? "hey, i’m ready when you are" : bubbleText)
+            SpeechBubbleView(text: bubbleText)
 
             CharacterView(
                 character: .cloud,
@@ -128,6 +130,10 @@ struct ContentView: View {
                 .foregroundStyle(.black.opacity(0.54))
 
             timerActionButtons
+
+            if !completionFeedbackLines.isEmpty {
+                completionCard
+            }
         }
         .padding(22)
         .frame(maxWidth: .infinity)
@@ -140,21 +146,27 @@ struct ContentView: View {
     @ViewBuilder
     private var timerActionButtons: some View {
         if vm.state == .idle {
-            Button("start the timer") {
+            Button("let’s begin") {
                 vm.startWork()
             }
             .buttonStyle(MainButtonStyle())
+            .keyboardShortcut("f", modifiers: [.command, .shift])
         }
 
         if vm.state == .waitingForBreakConfirmation || vm.state == .overdueBreak {
-            Button("start break") {
+            Button("one more session") {
                 vm.startBreak()
             }
             .buttonStyle(MainButtonStyle())
+
+            Button("done for now") {
+                vm.resetTimer()
+            }
+            .buttonStyle(SecondaryButtonStyle())
         }
 
         if vm.state == .waitingForWorkConfirmation || vm.state == .overdueWork {
-            Button("resume work") {
+            Button("ready for another round") {
                 vm.resumeWork()
             }
             .buttonStyle(MainButtonStyle())
@@ -176,38 +188,93 @@ struct ContentView: View {
     private var statusText: String {
         switch vm.state {
         case .idle:
-            return "ready to begin"
+            return vm.hasCompletedSessionToday ? "you showed up today" : "ready when you are"
         case .focusRunning:
-            return "focus session"
+            return "quiet focus in progress"
         case .waitingForBreakConfirmation:
-            return "time for a \(vm.upcomingBreakLabel)"
+            return "nice work. \(vm.upcomingBreakLabel) next"
         case .breakRunning:
-            return "\(vm.upcomingBreakLabel) session"
+            return "\(vm.upcomingBreakLabel), then we can go again"
         case .waitingForWorkConfirmation:
             return "ready to continue?"
         case .overdueBreak:
-            return "break overdue"
+            return "a short break still counts"
         case .overdueWork:
-            return "work overdue"
+            return "we can restart gently"
         }
     }
 
     private var bubbleText: String {
         switch vm.state {
         case .idle:
-            return "hey, i’m ready when you are"
+            if vm.todaySessionCount == 0 {
+                return "hey, i’m ready when you are"
+            }
+            if vm.streakDays >= 3 {
+                return "you showed up today. quietly proud of you."
+            }
+            if vm.mostRecentReflectionProductivity == .low {
+                return "it’s okay. a short session still counts."
+            }
+            return "ready for another gentle round?"
         case .focusRunning:
-            return "keep up the good work"
+            return "let’s keep this one simple."
         case .waitingForBreakConfirmation:
-            return "nice work. time for a \(vm.upcomingBreakLabel)"
+            return "nice work. that counted."
         case .breakRunning:
-            return "nice job. now, breathe a little"
+            return "breathe for a minute. no rush."
         case .waitingForWorkConfirmation:
-            return "ready to continue?"
+            return "ready when you are."
         case .overdueBreak:
-            return "why aren’t you on a break yet??"
+            return "let’s take a short break."
         case .overdueWork:
-            return "are you asleep? it’s been a long break"
+            return "you can always begin again."
+        }
+    }
+
+    private var completionCard: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            ForEach(completionFeedbackLines, id: \.self) { line in
+                Text(line)
+                    .font(.subheadline)
+                    .foregroundStyle(.black.opacity(0.67))
+            }
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color(red: 0.95, green: 0.98, blue: 0.93))
+        )
+    }
+
+    private var completionFeedbackLines: [String] {
+        guard vm.state == .waitingForBreakConfirmation || vm.state == .breakRunning else {
+            return []
+        }
+
+        var lines: [String] = []
+        if vm.todaySessionCount > 0 {
+            lines.append("you’ve done \(vm.todaySessionCount) session\(vm.todaySessionCount == 1 ? "" : "s") today.")
+        }
+        if vm.todayFocusMinutes > 0 {
+            lines.append("that’s \(formattedDuration(minutes: vm.todayFocusMinutes)) of focus.")
+        }
+        if vm.streakDays > 1 {
+            lines.append("you’re on a \(vm.streakDays)-day streak.")
+        }
+        return Array(lines.prefix(2))
+    }
+
+    private func formattedDuration(minutes: Int) -> String {
+        let hours = minutes / 60
+        let remainder = minutes % 60
+        if hours > 0 && remainder > 0 {
+            return "\(hours)h \(remainder)m"
+        } else if hours > 0 {
+            return "\(hours)h"
+        } else {
+            return "\(remainder)m"
         }
     }
 

@@ -323,6 +323,50 @@ final class TimerViewModel: ObservableObject {
         return sessionHistory.filter { calendar.isDateInToday($0.completedAt) }.count
     }
 
+    var hasCompletedSessionToday: Bool {
+        todaySessionCount > 0
+    }
+
+    var mostRecentSession: SessionRecord? {
+        sessionHistory.last
+    }
+
+    var mostRecentReflectionProductivity: ReflectionProductivity? {
+        sessionHistory
+            .reversed()
+            .compactMap(\.reflectionProductivity)
+            .first
+    }
+
+    var recentSessions: [SessionRecord] {
+        Array(sessionHistory.suffix(10).reversed())
+    }
+
+    var weeklySessionsCount: Int {
+        sessionsThisWeek.count
+    }
+
+    var weeklyFocusMinutesTotal: Int {
+        sessionsThisWeek.reduce(0) { $0 + ($1.focusSeconds / 60) }
+    }
+
+    var weeklyActiveDaysCount: Int {
+        let calendar = Calendar.current
+        let uniqueDays = Set(sessionsThisWeek.map { calendar.startOfDay(for: $0.completedAt) })
+        return uniqueDays.count
+    }
+
+    var bestWeekdayThisWeek: String? {
+        let calendar = Calendar.current
+        let grouped = Dictionary(grouping: sessionsThisWeek) { session in
+            calendar.startOfDay(for: session.completedAt)
+        }
+        guard let bestDay = grouped.max(by: { $0.value.count < $1.value.count })?.key else {
+            return nil
+        }
+        return bestDay.formatted(.dateTime.weekday(.wide))
+    }
+
     var reflectionCompletionRate: Int {
         guard !sessionHistory.isEmpty else { return 0 }
         let reflectedCount = sessionHistory.filter {
@@ -359,6 +403,14 @@ final class TimerViewModel: ObservableObject {
     private func sanitized(_ value: Int, fallback: Int, range: ClosedRange<Int>) -> Int {
         guard value > 0 else { return fallback }
         return min(max(value, range.lowerBound), range.upperBound)
+    }
+
+    private var sessionsThisWeek: [SessionRecord] {
+        let calendar = Calendar.current
+        guard let week = calendar.dateInterval(of: .weekOfYear, for: Date()) else {
+            return []
+        }
+        return sessionHistory.filter { week.contains($0.completedAt) }
     }
 
     private func savePositive(_ value: Int, forKey key: String, fallback: Int) {
