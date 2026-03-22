@@ -1,23 +1,20 @@
+//
+//  SessionRecord.swift
+//  wellwell
+//
+//  Created by Eelis Puro on 22.3.2026.
+//
+
 import Foundation
 
-struct SessionRecord: Codable, Identifiable {
+struct SessionRecord: Codable, Identifiable, Equatable {
     let id: UUID
     let completedAt: Date
-    let focusMinutes: Int
-    let sessionLabel: String
-    let wasLongBreakSession: Bool
+    let focusSeconds: Int
 
-    init(
-        id: UUID = UUID(),
-        completedAt: Date = .now,
-        focusMinutes: Int,
-        sessionLabel: String,
-        wasLongBreakSession: Bool
-    ) {
+    init(id: UUID = UUID(), completedAt: Date = Date(), focusSeconds: Int) {
         self.id = id
         self.completedAt = completedAt
-        self.focusMinutes = focusMinutes
-        self.sessionLabel = sessionLabel
-        self.wasLongBreakSession = wasLongBreakSession
+        self.focusSeconds = max(60, focusSeconds)
     }
 }

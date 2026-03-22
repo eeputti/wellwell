@@ -43,7 +43,7 @@ final class TimerViewModel: ObservableObject {
     @Published var sessionsUntilLongBreak: Int = 4
     @Published var longBreakMinutes: Int = 15
     @Published private(set) var completedFocusSessions: Int = 0
-    @Published private(set) var recentSessions: [SessionRecord] = []
+    @Published private(set) var sessionHistory: [SessionRecord] = []
     var isUpcomingBreakLong: Bool = false
 
     var focusDuration: Int {
@@ -71,7 +71,6 @@ final class TimerViewModel: ObservableObject {
         static let breakMinutes = "breakMinutes"
         static let sessionsUntilLongBreak = "sessionsUntilLongBreak"
         static let longBreakMinutes = "longBreakMinutes"
-        static let sessionLabel = "sessionLabel"
         static let sessionHistory = "sessionHistory"
     }
 
@@ -286,61 +285,10 @@ final class TimerViewModel: ObservableObject {
         SoundManager.shared.stop()
     }
 
-    var totalSessionsCompleted: Int {
-        sessionHistory.count
-    }
-
-    var totalFocusMinutes: Int {
-        sessionHistory.reduce(0) { $0 + $1.focusMinutes }
-    }
-
-    var todayFocusMinutes: Int {
-        let calendar = Calendar.current
-        return sessionHistory
-            .filter { calendar.isDateInToday($0.completedAt) }
-            .reduce(0) { $0 + $1.focusMinutes }
-    }
-
-    var currentStreakDays: Int {
-        let calendar = Calendar.current
-        let uniqueDays = Set(sessionHistory.map { calendar.startOfDay(for: $0.completedAt) })
-        guard !uniqueDays.isEmpty else { return 0 }
-
-        var streak = 0
-        var currentDay = calendar.startOfDay(for: .now)
-
-        while uniqueDays.contains(currentDay) {
-            streak += 1
-            guard let previousDay = calendar.date(byAdding: .day, value: -1, to: currentDay) else {
-                break
-            }
-            currentDay = previousDay
-        }
-
-        return streak
-    }
-
-    func weeklyFocusMinutes() -> [Int] {
-        let calendar = Calendar.current
-        let now = Date()
-        let weekStart = calendar.dateInterval(of: .weekOfYear, for: now)?.start ?? calendar.startOfDay(for: now)
-
-        return (0..<7).map { offset in
-            guard
-                let dayStart = calendar.date(byAdding: .day, value: offset, to: weekStart),
-                let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart)
-            else {
-                return 0
-            }
-
-            return sessionHistory
-                .filter { $0.completedAt >= dayStart && $0.completedAt < dayEnd }
-                .reduce(0) { $0 + $1.focusMinutes }
-        }
-    }
-
     func triggerOpeningReaction() {
         guard !showStreakReaction else { return }
+        streakDays = calculateStreakDays(from: sessionHistory)
+        streakMood = mood(for: streakDays)
         showStreakReaction = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) { [weak self] in
             self?.showStreakReaction = false
@@ -368,9 +316,38 @@ final class TimerViewModel: ObservableObject {
         breakMinutes = sanitized(defaults.integer(forKey: DefaultsKeys.breakMinutes), fallback: 5, range: 1...60)
         sessionsUntilLongBreak = sanitized(defaults.integer(forKey: DefaultsKeys.sessionsUntilLongBreak), fallback: 4, range: 1...12)
         longBreakMinutes = sanitized(defaults.integer(forKey: DefaultsKeys.longBreakMinutes), fallback: 15, range: 1...90)
-        sessionLabel = defaults.string(forKey: DefaultsKeys.sessionLabel) ?? ""
-        loadHistory()
+        sessionHistory = loadSessionHistory()
         timeRemaining = focusDuration
+    }
+
+    var totalCompletedSessions: Int {
+        sessionHistory.count
+    }
+
+    var totalFocusMinutesAllTime: Int {
+        sessionHistory.reduce(0) { $0 + ($1.focusSeconds / 60) }
+    }
+
+    var todayFocusMinutes: Int {
+        let calendar = Calendar.current
+        return sessionHistory
+            .filter { calendar.isDateInToday($0.completedAt) }
+            .reduce(0) { $0 + ($1.focusSeconds / 60) }
+    }
+
+    var weeklyFocusSummary: [(dayLabel: String, minutes: Int)] {
+        let calendar = Calendar.current
+        let today = Date()
+        return (0..<7).map { offset in
+            let date = calendar.date(byAdding: .day, value: -(6 - offset), to: today) ?? today
+            let dayStart = calendar.startOfDay(for: date)
+            let nextDay = calendar.date(byAdding: .day, value: 1, to: dayStart) ?? dayStart
+            let minutes = sessionHistory
+                .filter { $0.completedAt >= dayStart && $0.completedAt < nextDay }
+                .reduce(0) { $0 + ($1.focusSeconds / 60) }
+            let dayLabel = date.formatted(.dateTime.weekday(.abbreviated))
+            return (dayLabel, minutes)
+        }
     }
 
     private func sanitized(_ value: Int, fallback: Int, range: ClosedRange<Int>) -> Int {
@@ -410,36 +387,60 @@ final class TimerViewModel: ObservableObject {
     }
 
     private func registerCompletedPomodoro() {
-        let trimmedLabel = sessionLabel.trimmingCharacters(in: .whitespacesAndNewlines)
-        let record = SessionRecord(
-            focusMinutes: focusMinutes,
-            sessionLabel: trimmedLabel,
-            wasLongBreakSession: isUpcomingBreakLong
-        )
-        sessionHistory.insert(record, at: 0)
-        if sessionHistory.count > 120 {
-            sessionHistory = Array(sessionHistory.prefix(120))
-        }
-        saveHistory()
+        let record = SessionRecord(focusSeconds: focusDuration)
+        sessionHistory.append(record)
+        trimHistory()
+        saveSessionHistory()
+        streakDays = calculateStreakDays(from: sessionHistory)
+        streakMood = mood(for: streakDays)
     }
 
-    private func loadHistory() {
-        guard let data = defaults.data(forKey: DefaultsKeys.sessionHistory) else {
-            sessionHistory = []
-            return
-        }
-        let decoder = JSONDecoder()
-        if let decoded = try? decoder.decode([SessionRecord].self, from: data) {
-            sessionHistory = decoded.sorted { $0.completedAt > $1.completedAt }
-        } else {
-            sessionHistory = []
-        }
+    private func trimHistory() {
+        guard sessionHistory.count > 730 else { return }
+        sessionHistory = Array(sessionHistory.suffix(730))
     }
 
-    private func saveHistory() {
-        let encoder = JSONEncoder()
-        if let data = try? encoder.encode(sessionHistory) {
-            defaults.set(data, forKey: DefaultsKeys.sessionHistory)
+    private func loadSessionHistory() -> [SessionRecord] {
+        guard let raw = defaults.data(forKey: DefaultsKeys.sessionHistory) else {
+            return []
+        }
+        return (try? JSONDecoder().decode([SessionRecord].self, from: raw)) ?? []
+    }
+
+    private func saveSessionHistory() {
+        guard let data = try? JSONEncoder().encode(sessionHistory) else { return }
+        defaults.set(data, forKey: DefaultsKeys.sessionHistory)
+    }
+
+    private func calculateStreakDays(from history: [SessionRecord]) -> Int {
+        let calendar = Calendar.current
+        let uniqueDays = Set(history.map { calendar.startOfDay(for: $0.completedAt) })
+        guard !uniqueDays.isEmpty else { return 0 }
+
+        let today = calendar.startOfDay(for: Date())
+        let includesToday = uniqueDays.contains(today)
+        var cursor = includesToday ? today : (calendar.date(byAdding: .day, value: -1, to: today) ?? today)
+        guard uniqueDays.contains(cursor) else { return 0 }
+
+        var streak = 0
+        while uniqueDays.contains(cursor) {
+            streak += 1
+            guard let previous = calendar.date(byAdding: .day, value: -1, to: cursor) else { break }
+            cursor = previous
+        }
+        return streak
+    }
+
+    private func mood(for streakDays: Int) -> StreakMood {
+        switch streakDays {
+        case 0...1:
+            return .sleepy
+        case 2...4:
+            return .happy
+        case 5...9:
+            return .excited
+        default:
+            return .golden
         }
     }
 }

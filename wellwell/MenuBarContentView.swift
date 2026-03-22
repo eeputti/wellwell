@@ -173,7 +173,19 @@ struct MenuBarContentView: View {
             Text("progress: \(vm.completedSessionProgressText)")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+            characterPicker
             cloudColorPicker
+            if purchaseManager.isPro {
+                Button("pro settings") {
+                    showProSettings = true
+                }
+                .buttonStyle(.bordered)
+            } else {
+                Button("unlock pro") {
+                    showPaywall = true
+                }
+                .buttonStyle(.borderedProminent)
+            }
         }
         .padding(8)
         .background(
@@ -182,30 +194,30 @@ struct MenuBarContentView: View {
         )
     }
 
-    private var idleCompanionPanel: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            TextField("what are you focusing on?", text: $vm.sessionLabel)
-                .textFieldStyle(.roundedBorder)
-            Text(idleMotivationLine)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+    private var characterPicker: some View {
+        HStack(spacing: 6) {
+            ForEach(CharacterType.allCases, id: \.storedValue) { character in
+                Button {
+                    selectedCharacterFamilyValue = character.storedValue
+                } label: {
+                    CharacterView(
+                        character: character,
+                        expression: .idle,
+                        cloudColor: selectedCloudColor,
+                        isLocked: false
+                    )
+                    .frame(width: 26, height: 20)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 5)
+                            .stroke(
+                                selectedCharacterFamily == character ? Color.primary : Color.clear,
+                                lineWidth: 1.5
+                            )
+                    )
+                }
+                .buttonStyle(.plain)
+            }
         }
-        .padding(8)
-        .background(
-            RoundedRectangle(cornerRadius: 10)
-                .fill(Color.primary.opacity(0.04))
-        )
-    }
-
-    private var idleMotivationLine: String {
-        let lines = [
-            "tiny progress still counts.",
-            "you only need to start.",
-            "quiet focus mode: on ☁️",
-            "one session can change the day."
-        ]
-        let seed = Calendar.current.ordinality(of: .day, in: .year, for: .now) ?? 0
-        return lines[(seed + vm.totalSessionsCompleted) % lines.count]
     }
 
     private var cloudColorPicker: some View {

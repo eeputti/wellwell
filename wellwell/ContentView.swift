@@ -11,12 +11,17 @@ struct ContentView: View {
     @EnvironmentObject var vm: TimerViewModel
     @EnvironmentObject var purchaseManager: PurchaseManager
     @AppStorage("selectedCharacterFamily") private var selectedCharacterFamilyValue = CharacterType.cloud.storedValue
-    @AppStorage("selectedCloudColor") private var selectedCloudColor = CloudColorOption.defaultCloud.rawValue
-    @State private var showStats = false
+    @AppStorage("selectedCloudColor") private var selectedCloudColorValue = CloudColor.default.storedValue
+    @State private var selectedTab: HomeTab = .timer
+    @State private var showPaywall = false
 
-    @State private var isShowingStats = false
-    @State private var isShowingSettings = false
-    @State private var isShowingHistory = false
+    private enum HomeTab: String, CaseIterable, Identifiable {
+        case timer
+        case stats
+
+        var id: String { rawValue }
+        var title: String { rawValue }
+    }
 
     var body: some View {
         ZStack {
@@ -28,6 +33,39 @@ struct ContentView: View {
                     .font(.title2)
                     .fontWeight(.semibold)
                     .foregroundStyle(.black.opacity(0.7))
+
+                Picker("view", selection: $selectedTab) {
+                    ForEach(HomeTab.allCases) { tab in
+                        Text(tab.title).tag(tab)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .frame(maxWidth: 280)
+
+                if selectedTab == .timer {
+                    timerPanel
+                } else {
+                    StatsView()
+                        .environmentObject(vm)
+                        .environmentObject(purchaseManager)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+            }
+            .frame(minWidth: 560, minHeight: 560)
+            .padding(32)
+        }
+        .onAppear {
+            vm.triggerOpeningReaction()
+        }
+        .sheet(isPresented: $showPaywall) {
+            ProPaywallView()
+                .environmentObject(purchaseManager)
+        }
+        .animation(.easeInOut(duration: 0.25), value: vm.showStreakReaction)
+    }
+
+    private var timerPanel: some View {
+        VStack(spacing: 24) {
 
                 if vm.showStreakReaction {
                     StreakReactionView(streakDays: vm.streakDays, mood: vm.streakMood)
@@ -84,27 +122,6 @@ struct ContentView: View {
                     }
                     .buttonStyle(MainButtonStyle())
                 }
-            }
-            .frame(minWidth: 480, minHeight: 520)
-            .padding(40)
-        }
-        .onAppear {
-            vm.triggerOpeningReaction()
-        }
-        .sheet(isPresented: $isShowingStats) {
-            StatsView()
-        }
-        .sheet(isPresented: $isShowingSettings) {
-            TimerSettingsView()
-                .environmentObject(vm)
-        }
-        .sheet(isPresented: $isShowingHistory) {
-            SessionHistoryView(sessions: vm.recentSessions)
-        }
-        .animation(.easeInOut(duration: 0.25), value: vm.showStreakReaction)
-        .sheet(isPresented: $showStats) {
-            StatsView()
-                .environmentObject(purchaseManager)
         }
     }
 
@@ -237,7 +254,15 @@ struct ContentView: View {
                 .font(.subheadline)
                 .foregroundStyle(.black.opacity(0.6))
 
+            characterPicker
             cloudColorPicker
+
+            if !purchaseManager.isPro {
+                Button("unlock pro") {
+                    showPaywall = true
+                }
+                .buttonStyle(MainButtonStyle())
+            }
         }
         .padding(16)
         .background(
@@ -247,63 +272,30 @@ struct ContentView: View {
         .frame(maxWidth: 360)
     }
 
-    private var idleCompanionPanel: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            TextField("what are you focusing on?", text: $vm.sessionLabel)
-                .textFieldStyle(.plain)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 10)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.white.opacity(0.95))
-                )
-
-            Text(idleMotivationLine)
-                .font(.subheadline.weight(.medium))
-                .foregroundStyle(.black.opacity(0.62))
-
-            HStack(spacing: 12) {
-                idleStatPill(title: "today", value: "\(vm.todayFocusMinutes)m")
-                idleStatPill(title: "streak", value: "\(vm.currentStreakDays)d")
-                idleStatPill(title: "total", value: "\(vm.totalSessionsCompleted)")
+    private var characterPicker: some View {
+        HStack(spacing: 10) {
+            ForEach(CharacterType.allCases, id: \.storedValue) { character in
+                Button {
+                    selectedCharacterFamilyValue = character.storedValue
+                } label: {
+                    CharacterView(
+                        character: character,
+                        expression: .idle,
+                        cloudColor: selectedCloudColor,
+                        isLocked: false
+                    )
+                    .frame(width: 42, height: 32)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(
+                                selectedCharacterFamily == character ? Color.black.opacity(0.7) : Color.clear,
+                                lineWidth: 2
+                            )
+                    )
+                }
+                .buttonStyle(.plain)
             }
         }
-        .padding(14)
-        .background(
-            RoundedRectangle(cornerRadius: 18)
-                .fill(Color.white.opacity(0.8))
-        )
-        .frame(maxWidth: 360, alignment: .leading)
-    }
-
-    private func idleStatPill(title: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(title)
-                .font(.caption)
-                .foregroundStyle(.black.opacity(0.45))
-            Text(value)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.black.opacity(0.78))
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white.opacity(0.9))
-        )
-    }
-
-    private var idleMotivationLine: String {
-        let lines = [
-            "small steps count. this one is yours ☁️",
-            "one calm session at a time.",
-            "your cloud is cheering quietly for you.",
-            "just begin; you can adjust as you go.",
-            "focus gently, then celebrate the tiny win."
-        ]
-        let seed = Calendar.current.ordinality(of: .day, in: .year, for: .now) ?? 0
-        return lines[(seed + vm.totalSessionsCompleted) % lines.count]
     }
 
     private func timerSliderRow(title: String, value: Binding<Int>, range: ClosedRange<Int>) -> some View {
