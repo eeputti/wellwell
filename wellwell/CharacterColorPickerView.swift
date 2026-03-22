@@ -2,7 +2,7 @@ import SwiftUI
 
 struct CharacterColorPickerView: View {
     @Binding var selectedCloudColorValue: String
-    var swatchSize: CGFloat = 20
+    var swatchSize: CGFloat = 26
     var spacing: CGFloat = 10
     var selectedBorderColor: Color = .primary
     var unselectedBorderColor: Color = .clear

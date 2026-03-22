@@ -48,6 +48,7 @@ final class TimerViewModel: ObservableObject {
     @Published var showStreakReaction: Bool = false
     @Published var streakDays: Int = 0
     @Published var streakMood: StreakMood = .happy
+    @Published var streakMilestoneMessage: String?
     @Published private(set) var sessionHistory: [SessionRecord] = []
     
     private var timer: Timer?
@@ -286,6 +287,7 @@ final class TimerViewModel: ObservableObject {
         guard !showStreakReaction else { return }
         streakDays = calculateStreakDays(from: sessionHistory)
         streakMood = mood(for: streakDays)
+        streakMilestoneMessage = nil
         showStreakReaction = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) { [weak self] in
             self?.showStreakReaction = false
@@ -582,6 +584,7 @@ final class TimerViewModel: ObservableObject {
     }
 
     private func registerCompletedPomodoro() {
+        let previousStreakDays = streakDays
         let trimmedIntention = sessionIntentionDraft.trimmingCharacters(in: .whitespacesAndNewlines)
         let record = SessionRecord(
             focusSeconds: focusDuration,
@@ -595,6 +598,32 @@ final class TimerViewModel: ObservableObject {
         saveSessionHistory()
         streakDays = calculateStreakDays(from: sessionHistory)
         streakMood = mood(for: streakDays)
+        if streakDays > previousStreakDays {
+            triggerStreakIncreaseReaction(for: streakDays)
+        }
+    }
+
+    private func triggerStreakIncreaseReaction(for streakDays: Int) {
+        streakMilestoneMessage = milestoneMessage(for: streakDays)
+        showStreakReaction = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) { [weak self] in
+            self?.showStreakReaction = false
+        }
+    }
+
+    private func milestoneMessage(for streakDays: Int) -> String? {
+        switch streakDays {
+        case 3:
+            return "nice consistency"
+        case 7:
+            return "strong focus streak"
+        case 14:
+            return "you’re locked in"
+        case 30:
+            return "elite discipline"
+        default:
+            return nil
+        }
     }
 
     func continueWithAnotherSession() {
