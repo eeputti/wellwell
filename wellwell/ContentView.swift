@@ -10,7 +10,10 @@ import SwiftUI
 struct ContentView: View {
     @EnvironmentObject var vm: TimerViewModel
     @AppStorage("selectedCharacterFamily") private var selectedCharacterFamilyValue = CharacterType.cloud.storedValue
-    @AppStorage("selectedCloudColor") private var selectedCloudColorValue = CloudColor.default.storedValue
+
+    @State private var isShowingStats = false
+    @State private var isShowingSettings = false
+    @State private var isShowingHistory = false
 
     var body: some View {
         ZStack {
@@ -31,13 +34,13 @@ struct ContentView: View {
                 SpeechBubbleView(text: bubbleText)
                     .transition(.opacity.combined(with: .scale))
                     .animation(.easeInOut(duration: 0.25), value: bubbleText)
+
                 CharacterView(
                     character: selectedCharacterFamily,
                     expression: currentExpression,
-                    cloudColor: selectedCloudColor,
                     isLocked: false
                 )
-                    .frame(width: 220, height: 160)
+                .frame(width: 220, height: 160)
 
                 Text(vm.formattedTime())
                     .font(.system(size: 80, weight: .light, design: .rounded))
@@ -49,7 +52,11 @@ struct ContentView: View {
                     .foregroundStyle(.black.opacity(0.55))
 
                 if vm.state == .idle {
-                    settingsPanel
+                    IdleUtilityPanelView(
+                        onStatsTap: { isShowingStats = true },
+                        onSettingsTap: { isShowingSettings = true },
+                        onHistoryTap: { isShowingHistory = true }
+                    )
 
                     Button("start work") {
                         vm.startWork()
@@ -83,6 +90,16 @@ struct ContentView: View {
         }
         .onAppear {
             vm.triggerOpeningReaction()
+        }
+        .sheet(isPresented: $isShowingStats) {
+            StatsView()
+        }
+        .sheet(isPresented: $isShowingSettings) {
+            TimerSettingsView()
+                .environmentObject(vm)
+        }
+        .sheet(isPresented: $isShowingHistory) {
+            SessionHistoryView(sessions: vm.recentSessions)
         }
         .animation(.easeInOut(duration: 0.25), value: vm.showStreakReaction)
     }
@@ -146,108 +163,6 @@ struct ContentView: View {
 
     private var selectedCharacterFamily: CharacterType {
         CharacterType(storedValue: selectedCharacterFamilyValue)
-    }
-
-    private var selectedCloudColor: CloudColor {
-        CloudColor(storedValue: selectedCloudColorValue)
-    }
-
-    private var cloudColorPicker: some View {
-        HStack(spacing: 10) {
-            ForEach(CloudColor.allCases, id: \.storedValue) { color in
-                Button {
-                    selectedCloudColorValue = color.storedValue
-                } label: {
-                    Circle()
-                        .fill(swatchColor(for: color))
-                        .frame(width: 18, height: 18)
-                        .overlay(
-                            Circle()
-                                .stroke(
-                                    selectedCloudColor == color ? Color.black.opacity(0.75) : Color.clear,
-                                    lineWidth: 2
-                                )
-                        )
-                }
-                .buttonStyle(.plain)
-            }
-        }
-    }
-
-    private func swatchColor(for color: CloudColor) -> Color {
-        switch color {
-        case .default:
-            return Color.white
-        case .blue:
-            return Color(red: 0.43, green: 0.69, blue: 0.97)
-        case .green:
-            return Color(red: 0.46, green: 0.81, blue: 0.59)
-        case .pink:
-            return Color(red: 0.95, green: 0.58, blue: 0.75)
-        case .red:
-            return Color(red: 0.95, green: 0.43, blue: 0.43)
-        }
-    }
-
-    private var settingsPanel: some View {
-        VStack(spacing: 14) {
-            timerSliderRow(
-                title: "focus minutes",
-                value: $vm.focusMinutes,
-                range: 1...120
-            )
-            timerSliderRow(
-                title: "break minutes",
-                value: $vm.breakMinutes,
-                range: 1...60
-            )
-            timerSliderRow(
-                title: "sessions before long break",
-                value: $vm.sessionsUntilLongBreak,
-                range: 1...12
-            )
-            timerSliderRow(
-                title: "long break minutes",
-                value: $vm.longBreakMinutes,
-                range: 1...90
-            )
-
-            Text("progress: \(vm.completedSessionProgressText)")
-                .font(.subheadline)
-                .foregroundStyle(.black.opacity(0.6))
-
-            cloudColorPicker
-        }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color.white.opacity(0.82))
-        )
-        .frame(maxWidth: 360)
-    }
-
-    private func timerSliderRow(title: String, value: Binding<Int>, range: ClosedRange<Int>) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Text(title)
-                    .font(.subheadline)
-                    .foregroundStyle(.black.opacity(0.7))
-                Spacer()
-                Text("\(value.wrappedValue)")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.black.opacity(0.8))
-            }
-
-            Slider(
-                value: Binding(
-                    get: { Double(value.wrappedValue) },
-                    set: { value.wrappedValue = Int($0.rounded()) }
-                ),
-                in: Double(range.lowerBound)...Double(range.upperBound),
-                step: 1
-            )
-            .tint(Color(red: 0.94, green: 0.79, blue: 0.39))
-        }
     }
 }
 
