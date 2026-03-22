@@ -62,6 +62,7 @@ final class TimerViewModel: ObservableObject {
     @Published var pendingReflectionSessionID: UUID?
     @Published var showPostSessionFlow: Bool = false
     @Published private(set) var latestCompletedSessionID: UUID?
+    @Published var sessionIntentionDraft: String = ""
     @Published var isPaused: Bool = false
     var isUpcomingBreakLong: Bool = false
 
