@@ -15,6 +15,7 @@ struct CharacterColorPickerView: View {
         HStack(spacing: spacing) {
             ForEach(CloudColor.allCases, id: \.storedValue) { color in
                 Button {
+                    guard !color.isPremium else { return }
                     selectedCloudColorValue = color.storedValue
                 } label: {
                     Circle()
@@ -27,8 +28,17 @@ struct CharacterColorPickerView: View {
                                     lineWidth: 2
                                 )
                         )
+                        .overlay {
+                            if color.isPremium {
+                                Image(systemName: "lock.fill")
+                                    .font(.system(size: swatchSize * 0.45, weight: .bold))
+                                    .foregroundStyle(.white)
+                            }
+                        }
+                        .opacity(color.isPremium ? 0.65 : 1)
                 }
                 .buttonStyle(.plain)
+                .disabled(color.isPremium)
             }
         }
     }
