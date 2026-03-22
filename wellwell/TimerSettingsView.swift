@@ -65,6 +65,14 @@ struct TimerSettingsView: View {
             }
             .navigationTitle("settings")
             .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                    }
+                    .accessibilityLabel("close settings")
+                }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("done") {
                         dismiss()

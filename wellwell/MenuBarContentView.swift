@@ -282,6 +282,18 @@ struct ProSessionSettingsView: View {
 
     var body: some View {
         VStack(spacing: 16) {
+            HStack {
+                Spacer()
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.caption.weight(.semibold))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("close pro settings")
+            }
+
             Text("Wellwell Pro")
                 .font(.title2.weight(.semibold))
             Text("Customize your session lengths to match your flow.")
@@ -325,6 +337,18 @@ struct ProPaywallView: View {
 
     var body: some View {
         VStack(spacing: 14) {
+            HStack {
+                Spacer()
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.caption.weight(.semibold))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("close paywall")
+            }
+
             Image("well_idle")
                 .resizable()
                 .scaledToFit()

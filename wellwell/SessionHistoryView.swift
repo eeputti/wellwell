@@ -39,6 +39,14 @@ struct SessionHistoryView: View {
             }
             .navigationTitle("recent sessions")
             .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                    }
+                    .accessibilityLabel("close history")
+                }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("done") {
                         dismiss()
