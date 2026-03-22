@@ -9,7 +9,10 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject var vm: TimerViewModel
+    @EnvironmentObject var purchaseManager: PurchaseManager
     @AppStorage("selectedCharacterFamily") private var selectedCharacterFamilyValue = CharacterType.cloud.storedValue
+    @AppStorage("selectedCloudColor") private var selectedCloudColor = CloudColorOption.defaultCloud.rawValue
+    @State private var showStats = false
 
     @State private var isShowingStats = false
     @State private var isShowingSettings = false
@@ -99,6 +102,10 @@ struct ContentView: View {
             SessionHistoryView(sessions: vm.recentSessions)
         }
         .animation(.easeInOut(duration: 0.25), value: vm.showStreakReaction)
+        .sheet(isPresented: $showStats) {
+            StatsView()
+                .environmentObject(purchaseManager)
+        }
     }
 
     private var statusText: String {

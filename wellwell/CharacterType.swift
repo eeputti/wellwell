@@ -45,17 +45,17 @@ enum CharacterType: CaseIterable {
 
         switch expression {
         case .idle:
-            return "well_idle"
+            return "well_idle_\(cloudColor.assetSuffix)"
         case .focus:
-            return "well_focus"
+            return "well_focus_\(cloudColor.assetSuffix)"
         case .shortBreak:
-            return "well_break"
+            return "well_break_\(cloudColor.assetSuffix)"
         case .longBreak:
-            return "well_sleep"
+            return "well_sleep_\(cloudColor.assetSuffix)"
         case .breakStarting:
-            return "well_break_alert"
+            return "well_break_alert_\(cloudColor.assetSuffix)"
         case .noBreakWarning:
-            return "well_angry"
+            return "well_angry_\(cloudColor.assetSuffix)"
         }
     }
 

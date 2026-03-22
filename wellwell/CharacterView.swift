@@ -89,3 +89,57 @@ struct CharacterView: View {
         )
     }
 }
+
+enum CloudColorOption: String, CaseIterable, Identifiable {
+    case defaultCloud
+    case blue
+    case green
+    case pink
+    case red
+
+    var id: String { rawValue }
+
+    var assetSuffix: String {
+        switch self {
+        case .defaultCloud: return "default"
+        case .blue: return "blue"
+        case .green: return "green"
+        case .pink: return "pink"
+        case .red: return "red"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .defaultCloud:
+            return Color(red: 0.94, green: 0.79, blue: 0.39)
+        case .blue:
+            return Color(red: 0.51, green: 0.76, blue: 0.95)
+        case .green:
+            return Color(red: 0.56, green: 0.82, blue: 0.59)
+        case .pink:
+            return Color(red: 0.95, green: 0.67, blue: 0.82)
+        case .red:
+            return Color(red: 0.92, green: 0.52, blue: 0.51)
+        }
+    }
+
+    var label: String {
+        switch self {
+        case .defaultCloud:
+            return "gold"
+        case .blue:
+            return "blue"
+        case .green:
+            return "green"
+        case .pink:
+            return "pink"
+        case .red:
+            return "red"
+        }
+    }
+
+    static func from(rawValue: String) -> CloudColorOption {
+        CloudColorOption(rawValue: rawValue) ?? .defaultCloud
+    }
+}
