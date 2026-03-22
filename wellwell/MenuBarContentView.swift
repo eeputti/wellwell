@@ -43,7 +43,13 @@ struct MenuBarContentView: View {
                     Text("cloud color")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                    cloudColorPicker
+                    CharacterColorPickerView(
+                        selectedCloudColorValue: $selectedCloudColorValue,
+                        swatchSize: 14,
+                        spacing: 8,
+                        selectedBorderColor: .primary,
+                        unselectedBorderColor: Color.secondary.opacity(0.35)
+                    )
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 settingsPanel
@@ -242,43 +248,6 @@ struct MenuBarContentView: View {
                 }
                 .buttonStyle(.plain)
             }
-        }
-    }
-
-    private var cloudColorPicker: some View {
-        HStack(spacing: 8) {
-            ForEach(CloudColor.allCases, id: \.storedValue) { color in
-                Button {
-                    selectedCloudColorValue = color.storedValue
-                } label: {
-                    Circle()
-                        .fill(swatchColor(for: color))
-                        .frame(width: 14, height: 14)
-                        .overlay(
-                            Circle()
-                                .stroke(
-                                    selectedCloudColor == color ? Color.primary : Color.secondary.opacity(0.35),
-                                    lineWidth: 2
-                                )
-                        )
-                }
-                .buttonStyle(.plain)
-            }
-        }
-    }
-
-    private func swatchColor(for color: CloudColor) -> Color {
-        switch color {
-        case .default:
-            return Color.white
-        case .blue:
-            return Color(red: 0.43, green: 0.69, blue: 0.97)
-        case .green:
-            return Color(red: 0.46, green: 0.81, blue: 0.59)
-        case .pink:
-            return Color(red: 0.95, green: 0.58, blue: 0.75)
-        case .red:
-            return Color(red: 0.95, green: 0.43, blue: 0.43)
         }
     }
 
