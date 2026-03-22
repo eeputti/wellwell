@@ -19,9 +19,11 @@ struct MenuBarContentView: View {
 
     var body: some View {
         VStack(spacing: 14) {
-            Image(characterImageName)
-                .resizable()
-                .scaledToFit()
+            CharacterView(
+                character: .cloud,
+                expression: currentExpression,
+                isLocked: false
+            )
                 .frame(width: 120, height: 90)
 
             Text(vm.formattedTime())
@@ -131,22 +133,22 @@ struct MenuBarContentView: View {
         }
     }
 
-    private var characterImageName: String {
+    private var currentExpression: ExpressionType {
         switch vm.state {
         case .idle:
-            return "well_idle"
+            return .idle
         case .focusRunning:
-            return "well_focus"
+            return .focus
         case .waitingForBreakConfirmation:
-            return "well_break_alert"
+            return .breakStarting
         case .breakRunning:
-            return "well_break"
+            return .shortBreak
         case .waitingForWorkConfirmation:
-            return "well_focus"
+            return .focus
         case .overdueBreak:
-            return "well_angry"
+            return .noBreakWarning
         case .overdueWork:
-            return "well_sleep"
+            return .longBreak
         }
     }
 
