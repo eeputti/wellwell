@@ -15,7 +15,7 @@ final class TimerViewModel: ObservableObject {
         case excited
         case golden
     }
-    
+
     enum SessionState {
         case idle
         case focusRunning
@@ -25,7 +25,7 @@ final class TimerViewModel: ObservableObject {
         case overdueBreak
         case overdueWork
     }
-    
+
     @Published var state: SessionState = .idle
     @Published var timeRemaining: Int = 25 * 60
     @Published var showStreakReaction: Bool = false
@@ -37,12 +37,13 @@ final class TimerViewModel: ObservableObject {
     private var timer: Timer?
     private var overdueTimer: Timer?
     private let overdueInterval: TimeInterval = 120
-    
+
     @Published var focusMinutes: Int = 25
     @Published var breakMinutes: Int = 5
     @Published var sessionsUntilLongBreak: Int = 4
     @Published var longBreakMinutes: Int = 15
     @Published private(set) var completedFocusSessions: Int = 0
+    @Published private(set) var recentSessions: [SessionRecord] = []
     var isUpcomingBreakLong: Bool = false
 
     var focusDuration: Int {
@@ -76,7 +77,7 @@ final class TimerViewModel: ObservableObject {
 
     private let defaults: UserDefaults
     private var cancellables = Set<AnyCancellable>()
-    
+
     private var safeSessionsUntilLongBreak: Int {
         max(1, sessionsUntilLongBreak)
     }
@@ -129,41 +130,41 @@ final class TimerViewModel: ObservableObject {
         clearOverdueState()
         cancelAllFollowUps()
         stopTimer()
-        
+
         state = .focusRunning
         timeRemaining = focusDuration
-        
+
         SoundManager.shared.playOneShot(name: "well_start_timer")
-        
+
         startTimer()
     }
-    
+
     func startBreak() {
         stopAllSounds()
         clearOverdueState()
         cancelAllFollowUps()
         stopTimer()
-        
+
         state = .breakRunning
         timeRemaining = isUpcomingBreakLong ? longBreakDuration : breakDuration
-        
+
         startTimer()
     }
-    
+
     func resumeWork() {
         stopAllSounds()
         clearOverdueState()
         cancelAllFollowUps()
         stopTimer()
-        
+
         state = .focusRunning
         timeRemaining = focusDuration
-        
+
         SoundManager.shared.playOneShot(name: "well_start_timer")
-        
+
         startTimer()
     }
-    
+
     private func startTimer() {
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
             DispatchQueue.main.async {
@@ -171,33 +172,34 @@ final class TimerViewModel: ObservableObject {
             }
         }
     }
-    
+
     private func stopTimer() {
         timer?.invalidate()
         timer = nil
     }
-    
+
     private func tick() {
         guard timeRemaining > 0 else {
             handleTimerFinished()
             return
         }
-        
+
         timeRemaining -= 1
     }
-    
+
     private func handleTimerFinished() {
         stopTimer()
-        
+
         switch state {
         case .focusRunning:
             completedFocusSessions += 1
             isUpcomingBreakLong = completedFocusSessions % safeSessionsUntilLongBreak == 0
             state = .waitingForBreakConfirmation
             registerCompletedPomodoro()
-            
+            appendRecentSession(type: .focus, durationMinutes: focusMinutes)
+
             SoundManager.shared.playOneShot(name: "well_focus_done")
-            
+
             NotificationManager.shared.notifyFocusEnded()
             NotificationManager.shared.cancelBreakFollowUp()
             NotificationManager.shared.scheduleBreakFollowUp(after: overdueInterval)
@@ -209,16 +211,20 @@ final class TimerViewModel: ObservableObject {
                     SoundManager.shared.playLoop(name: "well_angry")
                 }
             }
-            
+
         case .breakRunning:
+            let breakType: SessionRecordType = isUpcomingBreakLong ? .longBreak : .shortBreak
+            let breakLength = isUpcomingBreakLong ? longBreakMinutes : breakMinutes
+
             state = .waitingForWorkConfirmation
             if isUpcomingBreakLong {
                 completedFocusSessions = 0
             }
             isUpcomingBreakLong = false
-            
+            appendRecentSession(type: breakType, durationMinutes: breakLength)
+
             SoundManager.shared.playOneShot(name: "well_break")
-            
+
             NotificationManager.shared.notifyBreakEnded()
             NotificationManager.shared.cancelWorkFollowUp()
             NotificationManager.shared.scheduleWorkFollowUp(after: overdueInterval)
@@ -230,12 +236,32 @@ final class TimerViewModel: ObservableObject {
                     SoundManager.shared.playLoop(name: "well_back_to_work")
                 }
             }
-            
+
         default:
             break
         }
     }
-    
+
+    private func appendRecentSession(type: SessionRecordType, durationMinutes: Int) {
+        let newRecord = SessionRecord(type: type, durationMinutes: durationMinutes)
+        recentSessions.insert(newRecord, at: 0)
+        recentSessions = Array(recentSessions.prefix(30))
+        saveRecentSessions()
+    }
+
+    private func saveRecentSessions() {
+        guard let encoded = try? JSONEncoder().encode(recentSessions) else { return }
+        defaults.set(encoded, forKey: DefaultsKeys.recentSessions)
+    }
+
+    private func loadRecentSessions() {
+        guard let data = defaults.data(forKey: DefaultsKeys.recentSessions),
+              let decoded = try? JSONDecoder().decode([SessionRecord].self, from: data) else {
+            recentSessions = []
+            return
+        }
+        recentSessions = decoded
+    }
 
     private func scheduleOverdueTimer(after seconds: TimeInterval, action: @escaping () -> Void) {
         clearOverdueState()
@@ -320,7 +346,7 @@ final class TimerViewModel: ObservableObject {
             self?.showStreakReaction = false
         }
     }
-    
+
     func formattedTime() -> String {
         let minutes = timeRemaining / 60
         let seconds = timeRemaining % 60

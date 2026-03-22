@@ -10,7 +10,10 @@ import SwiftUI
 struct ContentView: View {
     @EnvironmentObject var vm: TimerViewModel
     @AppStorage("selectedCharacterFamily") private var selectedCharacterFamilyValue = CharacterType.cloud.storedValue
-    @AppStorage("selectedCloudColor") private var selectedCloudColorValue = CloudColor.default.storedValue
+
+    @State private var isShowingStats = false
+    @State private var isShowingSettings = false
+    @State private var isShowingHistory = false
 
     var body: some View {
         ZStack {
@@ -31,13 +34,13 @@ struct ContentView: View {
                 SpeechBubbleView(text: bubbleText)
                     .transition(.opacity.combined(with: .scale))
                     .animation(.easeInOut(duration: 0.25), value: bubbleText)
+
                 CharacterView(
                     character: selectedCharacterFamily,
                     expression: currentExpression,
-                    cloudColor: selectedCloudColor,
                     isLocked: false
                 )
-                    .frame(width: 220, height: 160)
+                .frame(width: 220, height: 160)
 
                 Text(vm.formattedTime())
                     .font(.system(size: 80, weight: .light, design: .rounded))
@@ -84,6 +87,16 @@ struct ContentView: View {
         }
         .onAppear {
             vm.triggerOpeningReaction()
+        }
+        .sheet(isPresented: $isShowingStats) {
+            StatsView()
+        }
+        .sheet(isPresented: $isShowingSettings) {
+            TimerSettingsView()
+                .environmentObject(vm)
+        }
+        .sheet(isPresented: $isShowingHistory) {
+            SessionHistoryView(sessions: vm.recentSessions)
         }
         .animation(.easeInOut(duration: 0.25), value: vm.showStreakReaction)
     }
