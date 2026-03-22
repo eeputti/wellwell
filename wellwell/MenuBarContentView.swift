@@ -172,7 +172,13 @@ struct MenuBarContentView: View {
             Text("progress: \(vm.completedSessionProgressText)")
                 .font(.caption)
                 .foregroundStyle(.secondary)
-            cloudColorPicker
+            VStack(alignment: .leading, spacing: 4) {
+                Text("cloud color")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                cloudColorPicker
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(8)
         .background(
@@ -193,7 +199,7 @@ struct MenuBarContentView: View {
                         .overlay(
                             Circle()
                                 .stroke(
-                                    selectedCloudColor == color ? Color.primary : Color.clear,
+                                    selectedCloudColor == color ? Color.primary : Color.secondary.opacity(0.35),
                                     lineWidth: 2
                                 )
                         )
