@@ -121,7 +121,7 @@ struct ContentView: View {
                     .font(.title2.weight(.semibold))
                     .foregroundStyle(.black.opacity(0.78))
 
-                Text("let’s keep this one calm and simple")
+                Text("what a lovely day to work!")
                     .font(.subheadline)
                     .foregroundStyle(.black.opacity(0.55))
             }
@@ -248,18 +248,18 @@ struct ContentView: View {
                 .font(.subheadline)
                 .foregroundStyle(.black.opacity(0.55))
 
-            Text("one more session?")
+            Text("take an earned break")
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(.black.opacity(0.7))
 
             HStack(spacing: 10) {
-                Button("one more") {
-                    vm.continueWithAnotherSession()
+                Button("take an earned break") {
+                    vm.declineAnotherSession()
                 }
                 .buttonStyle(MainButtonStyle())
 
-                Button("not now") {
-                    vm.declineAnotherSession()
+                Button("continue session at your own risk") {
+                    vm.continueWithAnotherSession()
                 }
                 .buttonStyle(SecondaryButtonStyle())
             }
@@ -284,22 +284,29 @@ struct ContentView: View {
         }
 
         if vm.state == .waitingForBreakConfirmation || vm.state == .overdueBreak {
-            Button("one more session") {
+            Button("take an earned break") {
                 vm.startBreak()
             }
             .buttonStyle(MainButtonStyle())
 
-            Button("done for now") {
-                vm.resetTimer()
+            Button("continue session at your own risk") {
+                vm.startWork()
             }
             .buttonStyle(SecondaryButtonStyle())
         }
 
         if vm.state == .waitingForWorkConfirmation || vm.state == .overdueWork {
-            Button("ready for another round") {
+            Button("sorry i'm late but good to go again!") {
                 vm.resumeWork()
             }
             .buttonStyle(MainButtonStyle())
+        }
+
+        if vm.state == .breakRunning {
+            Button("skip break") {
+                vm.resumeWork()
+            }
+            .buttonStyle(SecondaryButtonStyle())
         }
 
         if vm.state != .idle {
@@ -320,7 +327,7 @@ struct ContentView: View {
         case .idle:
             return vm.hasCompletedSessionToday ? "you showed up today" : "ready when you are"
         case .focusRunning:
-            return "quiet focus in progress"
+            return "work in progress"
         case .waitingForBreakConfirmation:
             return "nice work. \(vm.upcomingBreakLabel) next"
         case .breakRunning:
@@ -330,7 +337,7 @@ struct ContentView: View {
         case .overdueBreak:
             return "a short break still counts"
         case .overdueWork:
-            return "we can restart gently"
+            return "restart gently"
         }
     }
 
@@ -348,17 +355,17 @@ struct ContentView: View {
             }
             return "ready for another gentle round?"
         case .focusRunning:
-            return "let’s keep this one simple."
+            return "keep up! you're doing great!"
         case .waitingForBreakConfirmation:
             return "nice work. that counted."
         case .breakRunning:
-            return "breathe for a minute. no rush."
+            return "whoa! it's break-time!"
         case .waitingForWorkConfirmation:
-            return "ready when you are."
+            return "come back, i miss you already."
         case .overdueBreak:
-            return "let’s take a short break."
+            return "whoa! it's break-time!"
         case .overdueWork:
-            return "you can always begin again."
+            return "come back, i miss you already."
         }
     }
 
