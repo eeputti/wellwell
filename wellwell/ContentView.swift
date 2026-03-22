@@ -75,13 +75,13 @@ struct ContentView: View {
                 SpeechBubbleView(text: bubbleText)
                     .transition(.opacity.combined(with: .scale))
                     .animation(.easeInOut(duration: 0.25), value: bubbleText)
+
                 CharacterView(
                     character: selectedCharacterFamily,
                     expression: currentExpression,
-                    cloudColor: selectedCloudColor,
                     isLocked: false
                 )
-                    .frame(width: 220, height: 160)
+                .frame(width: 220, height: 160)
 
                 Text(vm.formattedTime())
                     .font(.system(size: 80, weight: .light, design: .rounded))
@@ -93,6 +93,7 @@ struct ContentView: View {
                     .foregroundStyle(.black.opacity(0.55))
 
                 if vm.state == .idle {
+                    idleCompanionPanel
                     settingsPanel
 
                     Button("start work") {

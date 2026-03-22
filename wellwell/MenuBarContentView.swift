@@ -38,6 +38,7 @@ struct MenuBarContentView: View {
                 .foregroundStyle(.secondary)
             
             if vm.state == .idle {
+                idleCompanionPanel
                 settingsPanel
             }
             
