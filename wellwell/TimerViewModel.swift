@@ -43,7 +43,8 @@ final class TimerViewModel: ObservableObject {
     @Published var longBreakMinutes: Int = 15
     @Published private(set) var completedFocusSessions: Int = 0
     @Published var pendingReflectionSessionID: UUID?
-    @Published var sessionIntentionDraft: String = ""
+    @Published var showPostSessionFlow: Bool = false
+    @Published private(set) var latestCompletedSessionID: UUID?
     var isUpcomingBreakLong: Bool = false
 
     var focusDuration: Int {
@@ -124,6 +125,7 @@ final class TimerViewModel: ObservableObject {
         clearOverdueState()
         cancelAllFollowUps()
         stopTimer()
+        showPostSessionFlow = false
 
         state = .focusRunning
         timeRemaining = focusDuration
@@ -138,6 +140,7 @@ final class TimerViewModel: ObservableObject {
         clearOverdueState()
         cancelAllFollowUps()
         stopTimer()
+        showPostSessionFlow = false
 
         state = .breakRunning
         timeRemaining = isUpcomingBreakLong ? longBreakDuration : breakDuration
@@ -150,6 +153,7 @@ final class TimerViewModel: ObservableObject {
         clearOverdueState()
         cancelAllFollowUps()
         stopTimer()
+        showPostSessionFlow = false
 
         state = .focusRunning
         timeRemaining = focusDuration
@@ -276,6 +280,7 @@ final class TimerViewModel: ObservableObject {
         stopTimer()
         isUpcomingBreakLong = false
         completedFocusSessions = 0
+        showPostSessionFlow = false
         state = .idle
         timeRemaining = focusDuration
     }
@@ -418,12 +423,24 @@ final class TimerViewModel: ObservableObject {
             intention: trimmedIntention.isEmpty ? nil : trimmedIntention
         )
         sessionHistory.append(record)
-        sessionIntentionDraft = ""
-        pendingReflectionSessionID = record.id
+        latestCompletedSessionID = record.id
+        pendingReflectionSessionID = nil
+        showPostSessionFlow = true
         trimHistory()
         saveSessionHistory()
         streakDays = calculateStreakDays(from: sessionHistory)
         streakMood = mood(for: streakDays)
+    }
+
+    func continueWithAnotherSession() {
+        showPostSessionFlow = false
+        pendingReflectionSessionID = nil
+        startWork()
+    }
+
+    func declineAnotherSession() {
+        showPostSessionFlow = false
+        pendingReflectionSessionID = latestCompletedSessionID
     }
 
     func saveReflection(

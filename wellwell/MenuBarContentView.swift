@@ -56,6 +56,35 @@ struct MenuBarContentView: View {
                 .foregroundStyle(.primary)
                 .padding(.horizontal, 8)
 
+            if vm.showPostSessionFlow && vm.state == .waitingForBreakConfirmation {
+                VStack(spacing: 6) {
+                    Text("nice work ✨")
+                        .font(.subheadline.weight(.semibold))
+                    Text("today: \(vm.todaySessionCount) sessions • \(vm.todayFocusMinutes) min")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text("one more session?")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    HStack(spacing: 8) {
+                        Button("one more") {
+                            vm.continueWithAnotherSession()
+                        }
+                        .buttonStyle(.borderedProminent)
+
+                        Button("not now") {
+                            vm.declineAnotherSession()
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                }
+                .padding(8)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color.primary.opacity(0.05))
+                )
+            }
+
             if vm.state == .idle {
                 Button("start work") {
                     vm.startWork()
