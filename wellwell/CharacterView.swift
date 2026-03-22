@@ -52,7 +52,7 @@ struct CharacterView: View {
             Image(imageName)
                 .resizable()
                 .scaledToFit()
-                .id(expressionKey)
+                .id(imageName)
                 .transition(.opacity)
         }
         .offset(y: isIdleExpression && !isLocked ? (floatUp ? -3 : 3) : 0)
