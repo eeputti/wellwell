@@ -38,6 +38,7 @@ struct MenuBarContentView: View {
                 .foregroundStyle(.secondary)
             
             if vm.state == .idle {
+                idleCompanionPanel
                 settingsPanel
             }
             
@@ -179,6 +180,32 @@ struct MenuBarContentView: View {
             RoundedRectangle(cornerRadius: 10)
                 .fill(Color.primary.opacity(0.05))
         )
+    }
+
+    private var idleCompanionPanel: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            TextField("what are you focusing on?", text: $vm.sessionLabel)
+                .textFieldStyle(.roundedBorder)
+            Text(idleMotivationLine)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding(8)
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color.primary.opacity(0.04))
+        )
+    }
+
+    private var idleMotivationLine: String {
+        let lines = [
+            "tiny progress still counts.",
+            "you only need to start.",
+            "quiet focus mode: on ☁️",
+            "one session can change the day."
+        ]
+        let seed = Calendar.current.ordinality(of: .day, in: .year, for: .now) ?? 0
+        return lines[(seed + vm.totalSessionsCompleted) % lines.count]
     }
 
     private var cloudColorPicker: some View {

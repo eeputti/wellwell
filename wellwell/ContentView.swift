@@ -49,6 +49,7 @@ struct ContentView: View {
                     .foregroundStyle(.black.opacity(0.55))
 
                 if vm.state == .idle {
+                    idleCompanionPanel
                     settingsPanel
 
                     Button("start work") {
@@ -224,6 +225,65 @@ struct ContentView: View {
                 .fill(Color.white.opacity(0.82))
         )
         .frame(maxWidth: 360)
+    }
+
+    private var idleCompanionPanel: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            TextField("what are you focusing on?", text: $vm.sessionLabel)
+                .textFieldStyle(.plain)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.white.opacity(0.95))
+                )
+
+            Text(idleMotivationLine)
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.black.opacity(0.62))
+
+            HStack(spacing: 12) {
+                idleStatPill(title: "today", value: "\(vm.todayFocusMinutes)m")
+                idleStatPill(title: "streak", value: "\(vm.currentStreakDays)d")
+                idleStatPill(title: "total", value: "\(vm.totalSessionsCompleted)")
+            }
+        }
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: 18)
+                .fill(Color.white.opacity(0.8))
+        )
+        .frame(maxWidth: 360, alignment: .leading)
+    }
+
+    private func idleStatPill(title: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .font(.caption)
+                .foregroundStyle(.black.opacity(0.45))
+            Text(value)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.black.opacity(0.78))
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.white.opacity(0.9))
+        )
+    }
+
+    private var idleMotivationLine: String {
+        let lines = [
+            "small steps count. this one is yours ☁️",
+            "one calm session at a time.",
+            "your cloud is cheering quietly for you.",
+            "just begin; you can adjust as you go.",
+            "focus gently, then celebrate the tiny win."
+        ]
+        let seed = Calendar.current.ordinality(of: .day, in: .year, for: .now) ?? 0
+        return lines[(seed + vm.totalSessionsCompleted) % lines.count]
     }
 
     private func timerSliderRow(title: String, value: Binding<Int>, range: ClosedRange<Int>) -> some View {

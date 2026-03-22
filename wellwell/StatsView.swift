@@ -2,21 +2,8 @@ import SwiftUI
 import Charts
 
 struct StatsView: View {
+    @EnvironmentObject var vm: TimerViewModel
     @EnvironmentObject var purchaseManager: PurchaseManager
-
-    private let todayFocusMinutes = 135
-    private let currentStreakDays = 6
-    private let totalSessions = 148
-
-    private let weeklyData: [WeeklyFocusPoint] = [
-        WeeklyFocusPoint(day: "Mon", minutes: 90),
-        WeeklyFocusPoint(day: "Tue", minutes: 120),
-        WeeklyFocusPoint(day: "Wed", minutes: 75),
-        WeeklyFocusPoint(day: "Thu", minutes: 140),
-        WeeklyFocusPoint(day: "Fri", minutes: 110),
-        WeeklyFocusPoint(day: "Sat", minutes: 135),
-        WeeklyFocusPoint(day: "Sun", minutes: 80)
-    ]
 
     var body: some View {
         ZStack {
@@ -30,9 +17,9 @@ struct StatsView: View {
                     .foregroundStyle(.black.opacity(0.7))
 
                 HStack(spacing: 12) {
-                    statCard(title: "today's focus", value: "\(todayFocusMinutes)m")
-                    statCard(title: "streak", value: "\(currentStreakDays) days")
-                    statCard(title: "sessions", value: "\(totalSessions)")
+                    statCard(title: "today's focus", value: "\(vm.todayFocusMinutes)m")
+                    statCard(title: "streak", value: "\(vm.currentStreakDays) days")
+                    statCard(title: "sessions", value: "\(vm.totalSessionsCompleted)")
                 }
 
                 VStack(alignment: .leading, spacing: 10) {
@@ -59,31 +46,61 @@ struct StatsView: View {
                         .fill(Color.white.opacity(0.82))
                 )
 
-                Text(historyLabel)
-                    .font(.subheadline)
-                    .foregroundStyle(.black.opacity(0.6))
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack {
+                        Text("recent sessions")
+                            .font(.headline)
+                            .foregroundStyle(.black.opacity(0.75))
+                        Spacer()
+                        Text(historyLabel)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    if displayedHistory.isEmpty {
+                        Text("finish your first focus session and it will appear here.")
+                            .font(.subheadline)
+                            .foregroundStyle(.black.opacity(0.55))
+                    } else {
+                        ForEach(displayedHistory) { record in
+                            historyRow(record)
+                        }
+                    }
+                }
+                .padding(16)
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color.white.opacity(0.82))
+                )
 
                 Spacer(minLength: 0)
             }
             .padding(24)
-            .frame(minWidth: 560, minHeight: 420, alignment: .topLeading)
+            .frame(minWidth: 560, minHeight: 460, alignment: .topLeading)
         }
     }
 
     private var displayedWeeklyData: [WeeklyFocusPoint] {
+        let labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+        let minutes = vm.weeklyFocusMinutes()
+        let zipped = zip(labels, minutes).map { WeeklyFocusPoint(day: $0.0, minutes: $0.1) }
+
         if purchaseManager.isPro {
-            return weeklyData
+            return zipped
         }
 
-        return Array(weeklyData.prefix(3))
+        return Array(zipped.prefix(4))
+    }
+
+    private var displayedHistory: [SessionRecord] {
+        if purchaseManager.isPro {
+            return Array(vm.sessionHistory.prefix(8))
+        }
+        return Array(vm.sessionHistory.prefix(3))
     }
 
     private var historyLabel: String {
-        if purchaseManager.isPro {
-            return "pro: full history unlocked"
-        }
-
-        return "free: showing limited history"
+        purchaseManager.isPro ? "pro: full history" : "free: last 3 sessions"
     }
 
     private func statCard(title: String, value: String) -> some View {
@@ -102,6 +119,30 @@ struct StatsView: View {
             RoundedRectangle(cornerRadius: 14)
                 .fill(Color.white.opacity(0.82))
         )
+    }
+
+    private func historyRow(_ record: SessionRecord) -> some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(record.sessionLabel.isEmpty ? "focus session" : record.sessionLabel)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.black.opacity(0.8))
+                Text(record.completedAt.formatted(date: .abbreviated, time: .shortened))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+
+            Text("\(record.focusMinutes)m")
+                .font(.subheadline.weight(.semibold))
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(
+                    Capsule()
+                        .fill(Color(red: 0.94, green: 0.79, blue: 0.39).opacity(0.25))
+                )
+        }
     }
 }
 
