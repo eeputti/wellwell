@@ -16,40 +16,19 @@ enum CharacterType: CaseIterable {
     case leaf
 
     func assetName(for expression: ExpressionType) -> String {
-        "\(prefix)_\(suffix(for: expression))"
-    }
-
-    private var prefix: String {
-        switch self {
-        case .cloud:
-            return "cloud"
-        case .star:
-            return "star"
-        case .moon:
-            return "moon"
-        case .rainCloud:
-            return "rainCloud"
-        case .rainbow:
-            return "rainbow"
-        case .leaf:
-            return "leaf"
-        }
-    }
-
-    private func suffix(for expression: ExpressionType) -> String {
         switch expression {
         case .idle:
-            return "idle"
+            return "well_idle"
         case .focus:
-            return "focus"
+            return "well_focus"
         case .shortBreak:
-            return "shortBreak"
+            return "well_break"
         case .longBreak:
-            return "longBreak"
+            return "well_sleep"
         case .breakStarting:
-            return "breakStarting"
+            return "well_break_alert"
         case .noBreakWarning:
-            return "noBreakWarning"
+            return "well_angry"
         }
     }
 }
