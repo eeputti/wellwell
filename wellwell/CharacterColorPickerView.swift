@@ -2,7 +2,7 @@ import SwiftUI
 
 struct CharacterColorPickerView: View {
     @Binding var selectedCloudColorValue: String
-    var swatchSize: CGFloat = 20
+    var swatchSize: CGFloat = 26
     var spacing: CGFloat = 10
     var selectedBorderColor: Color = .primary
     var unselectedBorderColor: Color = .clear
@@ -12,23 +12,34 @@ struct CharacterColorPickerView: View {
     }
 
     var body: some View {
-        HStack(spacing: spacing) {
-            ForEach(CloudColor.allCases, id: \.storedValue) { color in
-                Button {
-                    selectedCloudColorValue = color.storedValue
-                } label: {
-                    Circle()
-                        .fill(swatchColor(for: color))
-                        .frame(width: swatchSize, height: swatchSize)
-                        .overlay(
-                            Circle()
-                                .stroke(
-                                    selectedCloudColor == color ? selectedBorderColor : unselectedBorderColor,
-                                    lineWidth: 2
-                                )
-                        )
+        VStack(alignment: .leading, spacing: 8) {
+            Text("choose your cloud")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+
+            HStack(spacing: spacing) {
+                ForEach(CloudColor.allCases, id: \.storedValue) { color in
+                    let isSelected = selectedCloudColor == color
+
+                    Button {
+                        selectedCloudColorValue = color.storedValue
+                    } label: {
+                        Circle()
+                            .fill(swatchColor(for: color))
+                            .frame(width: swatchSize, height: swatchSize)
+                            .shadow(color: .black.opacity(0.12), radius: 3, y: 1)
+                            .overlay(
+                                Circle()
+                                    .stroke(
+                                        isSelected ? selectedBorderColor : unselectedBorderColor,
+                                        lineWidth: isSelected ? 2.5 : 1
+                                    )
+                            )
+                            .scaleEffect(isSelected ? 1.08 : 1)
+                            .animation(.spring(response: 0.25, dampingFraction: 0.75), value: selectedCloudColorValue)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
         }
     }
