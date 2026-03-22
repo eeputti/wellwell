@@ -68,12 +68,8 @@ struct StatsView: View {
                             .font(.headline)
                         Text("coverage: \(vm.reflectionCompletionRate)%")
                             .font(.subheadline)
-                        Text("productivity: \(vm.productivitySummaryText)")
+                        Text(averageFocusLine)
                             .font(.subheadline)
-                        if let feeling = vm.averageFeelingScore {
-                            Text(String(format: "average feeling: %.1f / 3", feeling))
-                                .font(.subheadline)
-                        }
                     }
                     .foregroundStyle(.black.opacity(0.68))
                     .padding(14)
@@ -249,8 +245,8 @@ struct StatsView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("focus • \(session.focusSeconds / 60)m")
                                 .font(.subheadline)
-                            if let productivity = session.reflectionProductivity {
-                                Text(reflectionTag(for: productivity))
+                            if let focusScore = session.reflectionFocusScore {
+                                Text("reflection: focus \(focusScore)/5")
                                     .font(.caption)
                                     .foregroundStyle(.black.opacity(0.55))
                             }
@@ -289,15 +285,11 @@ struct StatsView: View {
         return Array(lines.prefix(4))
     }
 
-    private func reflectionTag(for productivity: ReflectionProductivity) -> String {
-        switch productivity {
-        case .low:
-            return "reflection: low energy"
-        case .okay:
-            return "reflection: steady"
-        case .high:
-            return "reflection: solid session"
+    private var averageFocusLine: String {
+        guard let focus = vm.averageFocusScore else {
+            return "average focus: no entries yet"
         }
+        return String(format: "average focus: %.1f / 5", focus)
     }
 
     private func formattedDuration(minutes: Int) -> String {
