@@ -54,6 +54,7 @@ final class TimerViewModel: ObservableObject {
     private var timer: Timer?
     private var overdueTimer: Timer?
     private let overdueInterval: TimeInterval = 120
+    private var timerCountsUp = false
 
     @Published var focusMinutes: Int = 25
     @Published var breakMinutes: Int = 5
@@ -197,10 +198,15 @@ final class TimerViewModel: ObservableObject {
     private func stopTimer() {
         timer?.invalidate()
         timer = nil
+        timerCountsUp = false
     }
 
     private func tick() {
         guard !isPaused else { return }
+        if timerCountsUp {
+            timeRemaining += 1
+            return
+        }
         guard timeRemaining > 0 else {
             handleTimerFinished()
             return
@@ -240,6 +246,9 @@ final class TimerViewModel: ObservableObject {
                 completedFocusSessions = 0
             }
             isUpcomingBreakLong = false
+            timeRemaining = 0
+            timerCountsUp = true
+            startTimer()
 
             SoundManager.shared.playOneShot(name: "well_break")
 

@@ -104,17 +104,17 @@ struct MenuBarContentView: View {
                     Text("today: \(vm.todaySessionCount) sessions • \(vm.todayFocusMinutes) min")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                    Text("one more session?")
+                    Text("take an earned break")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     HStack(spacing: 8) {
-                        Button("one more") {
-                            vm.continueWithAnotherSession()
+                        Button("take an earned break") {
+                            vm.declineAnotherSession()
                         }
                         .buttonStyle(.borderedProminent)
 
-                        Button("not now") {
-                            vm.declineAnotherSession()
+                        Button("continue session at your own risk") {
+                            vm.continueWithAnotherSession()
                         }
                         .buttonStyle(.bordered)
                     }
@@ -135,14 +135,26 @@ struct MenuBarContentView: View {
             }
 
             if vm.state == .waitingForBreakConfirmation || vm.state == .overdueBreak {
-                Button("start break") {
+                Button("take an earned break") {
                     vm.startBreak()
                 }
                 .buttonStyle(.borderedProminent)
+
+                Button("continue session at your own risk") {
+                    vm.startWork()
+                }
+                .buttonStyle(.bordered)
+            }
+
+            if vm.state == .breakRunning {
+                Button("skip break") {
+                    vm.resumeWork()
+                }
+                .buttonStyle(.bordered)
             }
 
             if vm.state == .waitingForWorkConfirmation || vm.state == .overdueWork {
-                Button("resume work") {
+                Button("sorry i'm late but good to go again!") {
                     vm.resumeWork()
                 }
                 .buttonStyle(.borderedProminent)
@@ -191,17 +203,17 @@ struct MenuBarContentView: View {
         case .idle:
             return vm.hasCompletedSessionToday ? "you showed up today" : "ready when you are"
         case .focusRunning:
-            return "quiet focus"
+            return "work in progress"
         case .waitingForBreakConfirmation:
             return "time for a \(vm.upcomingBreakLabel)"
         case .breakRunning:
             return "\(vm.upcomingBreakLabel) session"
         case .waitingForWorkConfirmation:
-            return "ready to continue?"
+            return "good to go again?"
         case .overdueBreak:
             return "gentle break reminder"
         case .overdueWork:
-            return "ready to restart"
+            return "restart gently"
         }
     }
 
@@ -210,17 +222,17 @@ struct MenuBarContentView: View {
         case .idle:
             return vm.todaySessionCount == 0 ? "i’m ready when you are" : "one focused block is enough for today."
         case .focusRunning:
-            return "let’s keep this one simple."
+            return "keep up! you're doing great!"
         case .waitingForBreakConfirmation:
             return "time for a \(vm.upcomingBreakLabel)"
         case .breakRunning:
-            return "nice job. now, breathe a little"
+            return "whoa! it's break-time!"
         case .waitingForWorkConfirmation:
-            return "ready to continue?"
+            return "come back, i miss you already."
         case .overdueBreak:
-            return "a short break still counts."
+            return "whoa! it's break-time!"
         case .overdueWork:
-            return "you can always begin again."
+            return "come back, i miss you already."
         }
     }
 
