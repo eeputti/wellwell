@@ -94,6 +94,13 @@ struct ContentView: View {
 
                 if vm.state == .idle {
                     idleCompanionPanel
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("cloud color")
+                            .font(.subheadline)
+                            .foregroundStyle(.black.opacity(0.7))
+                        cloudColorPicker
+                    }
+                    .frame(maxWidth: 360, alignment: .leading)
                     settingsPanel
 
                     Button("start work") {
@@ -253,14 +260,6 @@ struct ContentView: View {
             Text("progress: \(vm.completedSessionProgressText)")
                 .font(.subheadline)
                 .foregroundStyle(.black.opacity(0.6))
-
-            VStack(alignment: .leading, spacing: 6) {
-                Text("cloud color")
-                    .font(.subheadline)
-                    .foregroundStyle(.black.opacity(0.7))
-                cloudColorPicker
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(16)
         .background(
