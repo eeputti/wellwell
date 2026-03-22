@@ -10,6 +10,7 @@ import SwiftUI
 struct CharacterView: View {
     let character: CharacterType
     let expression: ExpressionType
+    let cloudColor: CloudColor = .default
     let isLocked: Bool
     var onLockedTap: (() -> Void)? = nil
 
@@ -20,7 +21,7 @@ struct CharacterView: View {
     }
 
     private var imageName: String {
-        character.assetName(for: expression)
+        character.assetName(for: expression, cloudColor: cloudColor)
     }
 
     private var isIdleExpression: Bool {

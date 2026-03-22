@@ -38,7 +38,11 @@ enum CharacterType: CaseIterable {
         }
     }
 
-    func assetName(for expression: ExpressionType) -> String {
+    func assetName(for expression: ExpressionType, cloudColor: CloudColor = .default) -> String {
+        if self == .cloud {
+            return "\(cloudAssetBaseName(for: expression))_\(cloudColor.storedValue)"
+        }
+
         switch expression {
         case .idle:
             return "well_idle"
@@ -52,6 +56,51 @@ enum CharacterType: CaseIterable {
             return "well_break_alert"
         case .noBreakWarning:
             return "well_angry"
+        }
+    }
+
+    private func cloudAssetBaseName(for expression: ExpressionType) -> String {
+        switch expression {
+        case .idle:
+            return "well_starter_idle"
+        case .focus:
+            return "well_focus"
+        case .shortBreak:
+            return "well_break_on"
+        case .longBreak:
+            return "well_long_break"
+        case .breakStarting:
+            return "well_break_notification"
+        case .noBreakWarning:
+            return "well_break_reminder"
+        }
+    }
+}
+
+enum CloudColor: CaseIterable, Equatable {
+    case `default`
+    case blue
+    case green
+    case pink
+    case red
+
+    var storedValue: String {
+        switch self {
+        case .default: return "default"
+        case .blue: return "blue"
+        case .green: return "green"
+        case .pink: return "pink"
+        case .red: return "red"
+        }
+    }
+
+    init(storedValue: String) {
+        switch storedValue {
+        case "blue": self = .blue
+        case "green": self = .green
+        case "pink": self = .pink
+        case "red": self = .red
+        default: self = .default
         }
     }
 }
