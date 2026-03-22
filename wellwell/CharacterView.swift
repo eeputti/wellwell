@@ -24,7 +24,20 @@ struct CharacterView: View {
     }
 
     private var imageName: String {
-        "\(characterKey)_\(expressionKey)"
+        switch expression {
+        case .idle:
+            return "well_idle"
+        case .focus:
+            return "well_focus"
+        case .shortBreak:
+            return "well_break"
+        case .longBreak:
+            return "well_sleep"
+        case .breakStarting:
+            return "well_break_alert"
+        case .noBreakWarning:
+            return "well_angry"
+        }
     }
 
     private var isIdleExpression: Bool {
