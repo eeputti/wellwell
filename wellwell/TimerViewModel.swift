@@ -28,6 +28,9 @@ final class TimerViewModel: ObservableObject {
     
     @Published var state: SessionState = .idle
     @Published var timeRemaining: Int = 25 * 60
+    @Published var showStreakReaction: Bool = false
+    @Published var streakDays: Int = 0
+    @Published var streakMood: StreakMood = .happy
     
     private var timer: Timer?
     private var overdueTimer: Timer?
@@ -248,6 +251,14 @@ final class TimerViewModel: ObservableObject {
     }
 
     private func registerCompletedPomodoro() {}
+
+    func triggerOpeningReaction() {
+        guard !showStreakReaction else { return }
+        showStreakReaction = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) { [weak self] in
+            self?.showStreakReaction = false
+        }
+    }
     
     func formattedTime() -> String {
         let minutes = timeRemaining / 60
