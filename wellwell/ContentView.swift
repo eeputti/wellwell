@@ -202,7 +202,7 @@ struct ContentView: View {
                         .overlay(
                             Circle()
                                 .stroke(
-                                    selectedCloudColor == color ? Color.black.opacity(0.75) : Color.clear,
+                                    selectedCloudColor == color ? Color.black.opacity(0.75) : Color.black.opacity(0.18),
                                     lineWidth: 2
                                 )
                         )
@@ -254,15 +254,13 @@ struct ContentView: View {
                 .font(.subheadline)
                 .foregroundStyle(.black.opacity(0.6))
 
-            characterPicker
-            cloudColorPicker
-
-            if !purchaseManager.isPro {
-                Button("unlock pro") {
-                    showPaywall = true
-                }
-                .buttonStyle(MainButtonStyle())
+            VStack(alignment: .leading, spacing: 6) {
+                Text("cloud color")
+                    .font(.subheadline)
+                    .foregroundStyle(.black.opacity(0.7))
+                cloudColorPicker
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(16)
         .background(
