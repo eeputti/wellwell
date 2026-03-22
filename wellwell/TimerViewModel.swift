@@ -38,6 +38,7 @@ final class TimerViewModel: ObservableObject {
     @Published var sessionsUntilLongBreak: Int = 4
     @Published var longBreakMinutes: Int = 15
     @Published private(set) var completedFocusSessions: Int = 0
+    var isUpcomingBreakLong: Bool = false
 
     var focusDuration: Int {
         max(1, focusMinutes) * 60
@@ -245,6 +246,8 @@ final class TimerViewModel: ObservableObject {
     private func stopAllSounds() {
         SoundManager.shared.stop()
     }
+
+    private func registerCompletedPomodoro() {}
     
     func formattedTime() -> String {
         let minutes = timeRemaining / 60
