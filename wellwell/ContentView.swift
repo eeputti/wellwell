@@ -6,6 +6,7 @@ struct ContentView: View {
     @AppStorage("selectedCloudColor") private var selectedCloudColorValue = CloudColor.default.storedValue
     @AppStorage("userFirstName") private var userFirstName = ""
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+    @AppStorage(TimerViewModel.dailyFocusTargetMinutesKey) private var dailyFocusTargetMinutes = 120
 
     @State private var showStats = false
     @State private var showSettings = false
@@ -165,26 +166,47 @@ struct ContentView: View {
     }
 
     private var consistencyCard: some View {
-        HStack(spacing: 10) {
-            Label {
-                Text("\(vm.streakDays)-day streak")
-                    .font(.subheadline.weight(.semibold))
-            } icon: {
-                Image(systemName: vm.streakDays >= 3 ? "flame.fill" : "flame")
-                    .foregroundStyle(vm.streakDays >= 3 ? .orange : .secondary)
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 10) {
+                Label {
+                    Text("\(vm.streakDays)-day streak")
+                        .font(.subheadline.weight(.semibold))
+                } icon: {
+                    Image(systemName: vm.streakDays >= 3 ? "flame.fill" : "flame")
+                        .foregroundStyle(vm.streakDays >= 3 ? .orange : .secondary)
+                }
+
+                Spacer()
+
+                Text("\(vm.todaySessionCount) today")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.black.opacity(0.58))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule()
+                            .fill(Color.black.opacity(0.06))
+                    )
             }
 
-            Spacer()
+            VStack(alignment: .leading, spacing: 6) {
+                Text(vm.todayLiveFocusText())
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.black.opacity(0.64))
 
-            Text("\(vm.todaySessionCount) today")
-                .font(.caption.weight(.medium))
-                .foregroundStyle(.black.opacity(0.58))
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(
-                    Capsule()
-                        .fill(Color.black.opacity(0.06))
-                )
+                GeometryReader { proxy in
+                    let progress = vm.todayFocusProgress(targetMinutes: dailyFocusTargetMinutes)
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(Color.black.opacity(0.07))
+
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(Color(red: 0.94, green: 0.79, blue: 0.39).opacity(0.85))
+                            .frame(width: proxy.size.width * progress)
+                    }
+                }
+                .frame(height: 10)
+            }
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)

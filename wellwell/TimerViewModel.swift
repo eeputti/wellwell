@@ -94,6 +94,8 @@ final class TimerViewModel: ObservableObject {
         static let longBreakMinutes = "longBreakMinutes"
         static let sessionHistory = "sessionHistory"
     }
+    
+    static let dailyFocusTargetMinutesKey = "dailyFocusTargetMinutes"
 
     private let defaults: UserDefaults
     private var cancellables = Set<AnyCancellable>()
@@ -346,6 +348,38 @@ final class TimerViewModel: ObservableObject {
         return sessionHistory
             .filter { calendar.isDateInToday($0.completedAt) }
             .reduce(0) { $0 + ($1.focusSeconds / 60) }
+    }
+    
+    var todayCompletedFocusSeconds: Int {
+        let calendar = Calendar.current
+        return sessionHistory
+            .filter { calendar.isDateInToday($0.completedAt) }
+            .reduce(0) { $0 + $1.focusSeconds }
+    }
+    
+    var activeFocusElapsedSeconds: Int {
+        guard state == .focusRunning, !isPaused else { return 0 }
+        return max(0, focusDuration - timeRemaining)
+    }
+    
+    var todayLiveFocusSeconds: Int {
+        todayCompletedFocusSeconds + activeFocusElapsedSeconds
+    }
+    
+    func todayLiveFocusText() -> String {
+        let totalMinutes = todayLiveFocusSeconds / 60
+        if totalMinutes < 60 {
+            return "\(totalMinutes) min today"
+        }
+        
+        let hours = totalMinutes / 60
+        let minutes = totalMinutes % 60
+        return "\(hours) h \(String(format: "%02d", minutes)) min today"
+    }
+    
+    func todayFocusProgress(targetMinutes: Int) -> Double {
+        let targetSeconds = max(1, targetMinutes) * 60
+        return min(1.0, Double(todayLiveFocusSeconds) / Double(targetSeconds))
     }
 
     var weeklyFocusSummary: [(dayLabel: String, minutes: Int)] {
