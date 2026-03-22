@@ -113,13 +113,13 @@ struct StatsView: View {
                 dismiss()
             } label: {
                 Image(systemName: "xmark")
-                    .font(.headline.weight(.bold))
-                    .foregroundStyle(.black.opacity(0.7))
-                    .frame(width: 30, height: 30)
-                    .background(Circle().fill(Color.white.opacity(0.92)))
+                    .font(.system(size: 34, weight: .light))
+                    .foregroundStyle(.black)
+                    .frame(width: 44, height: 44)
             }
             .buttonStyle(.plain)
-            .padding(16)
+            .padding(.top, 16)
+            .padding(.trailing, 22)
             .accessibilityLabel("close stats")
         }
     }
