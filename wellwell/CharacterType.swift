@@ -94,6 +94,10 @@ enum CloudColor: CaseIterable, Equatable {
         }
     }
 
+    var assetSuffix: String {
+        storedValue
+    }
+
     init(storedValue: String) {
         switch storedValue {
         case "blue": self = .blue

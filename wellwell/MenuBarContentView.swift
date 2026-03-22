@@ -39,6 +39,13 @@ struct MenuBarContentView: View {
             
             if vm.state == .idle {
                 idleCompanionPanel
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("cloud color")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    cloudColorPicker
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 settingsPanel
             }
             
@@ -173,13 +180,6 @@ struct MenuBarContentView: View {
             Text("progress: \(vm.completedSessionProgressText)")
                 .font(.caption)
                 .foregroundStyle(.secondary)
-            VStack(alignment: .leading, spacing: 4) {
-                Text("cloud color")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                cloudColorPicker
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(8)
         .background(
