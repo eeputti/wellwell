@@ -1,134 +1,182 @@
-//
-//  ContentView.swift
-//  wellwell
-//
-//  Created by Eelis Puro on 18.3.2026.
-//
-
 import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject var vm: TimerViewModel
-    @EnvironmentObject var purchaseManager: PurchaseManager
-    @AppStorage("selectedCharacterFamily") private var selectedCharacterFamilyValue = CharacterType.cloud.storedValue
+
     @AppStorage("selectedCloudColor") private var selectedCloudColorValue = CloudColor.default.storedValue
-    @State private var selectedTab: HomeTab = .timer
-    @State private var showPaywall = false
+    @AppStorage("userFirstName") private var userFirstName = ""
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
 
-    private enum HomeTab: String, CaseIterable, Identifiable {
-        case timer
-        case stats
-
-        var id: String { rawValue }
-        var title: String { rawValue }
-    }
+    @State private var showStats = false
+    @State private var showSettings = false
 
     var body: some View {
         ZStack {
             Color(red: 0.96, green: 0.95, blue: 0.92)
                 .ignoresSafeArea()
 
-            VStack(spacing: 24) {
-                Text("wellwell")
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.black.opacity(0.7))
-
-                Picker("view", selection: $selectedTab) {
-                    ForEach(HomeTab.allCases) { tab in
-                        Text(tab.title).tag(tab)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .frame(maxWidth: 280)
-
-                if selectedTab == .timer {
-                    timerPanel
-                } else {
-                    StatsView()
-                        .environmentObject(vm)
-                        .environmentObject(purchaseManager)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
-            }
-            .frame(minWidth: 560, minHeight: 560)
-            .padding(32)
-        }
-        .onAppear {
-            vm.triggerOpeningReaction()
-        }
-        .sheet(isPresented: $showPaywall) {
-            ProPaywallView()
-                .environmentObject(purchaseManager)
-        }
-        .animation(.easeInOut(duration: 0.25), value: vm.showStreakReaction)
-    }
-
-    private var timerPanel: some View {
-        VStack(spacing: 24) {
+            VStack(spacing: 22) {
+                headerRow
 
                 if vm.showStreakReaction {
                     StreakReactionView(streakDays: vm.streakDays, mood: vm.streakMood)
                         .transition(.opacity.combined(with: .scale))
                 }
 
-                SpeechBubbleView(text: bubbleText)
-                    .transition(.opacity.combined(with: .scale))
-                    .animation(.easeInOut(duration: 0.25), value: bubbleText)
+                cloudCard
+                timerCard
 
-                CharacterView(
-                    character: selectedCharacterFamily,
-                    expression: currentExpression,
-                    isLocked: false
-                )
-                .frame(width: 220, height: 160)
-
-                Text(vm.formattedTime())
-                    .font(.system(size: 80, weight: .light, design: .rounded))
-                    .monospacedDigit()
-                    .foregroundStyle(.black.opacity(0.85))
-
-                Text(statusText)
-                    .font(.title3)
-                    .foregroundStyle(.black.opacity(0.55))
-
-                if vm.state == .idle {
-                    idleCompanionPanel
-                    settingsPanel
-
-                    Button("start work") {
-                        vm.startWork()
-                    }
-                    .buttonStyle(MainButtonStyle())
-                }
-
-                if vm.state == .waitingForBreakConfirmation || vm.state == .overdueBreak {
-                    Button("start break") {
-                        vm.startBreak()
-                    }
-                    .buttonStyle(MainButtonStyle())
-                }
-
-                if vm.state == .waitingForWorkConfirmation || vm.state == .overdueWork {
-                    Button("resume work") {
-                        vm.resumeWork()
-                    }
-                    .buttonStyle(MainButtonStyle())
-                }
-
-                if vm.state != .idle {
-                    Button("reset timer") {
-                        vm.resetTimer()
-                    }
-                    .buttonStyle(MainButtonStyle())
-                }
+                Spacer(minLength: 0)
+            }
+            .frame(minWidth: 640, minHeight: 620)
+            .padding(30)
         }
+        .onAppear {
+            vm.triggerOpeningReaction()
+        }
+        .sheet(isPresented: $showStats) {
+            StatsView()
+                .environmentObject(vm)
+        }
+        .sheet(isPresented: $showSettings) {
+            TimerSettingsView()
+                .environmentObject(vm)
+        }
+        .sheet(
+            isPresented: Binding(
+                get: { vm.pendingReflectionSessionID != nil },
+                set: { presented in
+                    if !presented {
+                        vm.skipReflection()
+                    }
+                }
+            )
+        ) {
+            ReflectionSheetView(
+                onSave: { work, productivity, feeling in
+                    guard let sessionID = vm.pendingReflectionSessionID else { return }
+                    vm.saveReflection(for: sessionID, workSummary: work, productivity: productivity, feeling: feeling)
+                },
+                onSkip: {
+                    vm.skipReflection()
+                }
+            )
+        }
+        .fullScreenCover(isPresented: Binding(get: { !hasCompletedOnboarding }, set: { _ in })) {
+            OnboardingView()
+        }
+        .animation(.easeInOut(duration: 0.25), value: vm.showStreakReaction)
+    }
+
+    private var headerRow: some View {
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(greetingText)
+                    .font(.title2.weight(.semibold))
+                    .foregroundStyle(.black.opacity(0.78))
+
+                Text("let's make this one calm and focused")
+                    .font(.subheadline)
+                    .foregroundStyle(.black.opacity(0.55))
+            }
+
+            Spacer()
+
+            HStack(spacing: 10) {
+                Button("stats") {
+                    showStats = true
+                }
+                .buttonStyle(SecondaryButtonStyle())
+
+                Button("settings") {
+                    showSettings = true
+                }
+                .buttonStyle(SecondaryButtonStyle())
+            }
+        }
+    }
+
+    private var cloudCard: some View {
+        VStack(spacing: 14) {
+            SpeechBubbleView(text: vm.state == .idle ? "hey, i’m ready when you are" : bubbleText)
+
+            CharacterView(
+                character: .cloud,
+                expression: currentExpression,
+                cloudColor: selectedCloudColor,
+                isLocked: false
+            )
+            .frame(width: 260, height: 180)
+        }
+        .padding(.vertical, 18)
+        .frame(maxWidth: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: 26)
+                .fill(Color.white.opacity(0.82))
+        )
+    }
+
+    private var timerCard: some View {
+        VStack(spacing: 12) {
+            Text(vm.formattedTime())
+                .font(.system(size: 80, weight: .light, design: .rounded))
+                .monospacedDigit()
+                .foregroundStyle(.black.opacity(0.84))
+
+            Text(statusText)
+                .font(.headline)
+                .foregroundStyle(.black.opacity(0.54))
+
+            timerActionButtons
+        }
+        .padding(22)
+        .frame(maxWidth: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: 24)
+                .fill(Color.white.opacity(0.82))
+        )
+    }
+
+    @ViewBuilder
+    private var timerActionButtons: some View {
+        if vm.state == .idle {
+            Button("start the timer") {
+                vm.startWork()
+            }
+            .buttonStyle(MainButtonStyle())
+        }
+
+        if vm.state == .waitingForBreakConfirmation || vm.state == .overdueBreak {
+            Button("start break") {
+                vm.startBreak()
+            }
+            .buttonStyle(MainButtonStyle())
+        }
+
+        if vm.state == .waitingForWorkConfirmation || vm.state == .overdueWork {
+            Button("resume work") {
+                vm.resumeWork()
+            }
+            .buttonStyle(MainButtonStyle())
+        }
+
+        if vm.state != .idle {
+            Button("reset timer") {
+                vm.resetTimer()
+            }
+            .buttonStyle(SecondaryButtonStyle())
+        }
+    }
+
+    private var greetingText: String {
+        let name = userFirstName.trimmingCharacters(in: .whitespacesAndNewlines)
+        return name.isEmpty ? "welcome back" : "hi, \(name.lowercased())"
     }
 
     private var statusText: String {
         switch vm.state {
         case .idle:
-            return "ready to start"
+            return "ready to begin"
         case .focusRunning:
             return "focus session"
         case .waitingForBreakConfirmation:
@@ -147,9 +195,9 @@ struct ContentView: View {
     private var bubbleText: String {
         switch vm.state {
         case .idle:
-            return "ready when you are"
+            return "hey, i’m ready when you are"
         case .focusRunning:
-            return "keep up the good work!"
+            return "keep up the good work"
         case .waitingForBreakConfirmation:
             return "nice work. time for a \(vm.upcomingBreakLabel)"
         case .breakRunning:
@@ -182,142 +230,8 @@ struct ContentView: View {
         }
     }
 
-    private var selectedCharacterFamily: CharacterType {
-        CharacterType(storedValue: selectedCharacterFamilyValue)
-    }
-
     private var selectedCloudColor: CloudColor {
         CloudColor(storedValue: selectedCloudColorValue)
-    }
-
-    private var cloudColorPicker: some View {
-        HStack(spacing: 10) {
-            ForEach(CloudColor.allCases, id: \.storedValue) { color in
-                Button {
-                    selectedCloudColorValue = color.storedValue
-                } label: {
-                    Circle()
-                        .fill(swatchColor(for: color))
-                        .frame(width: 18, height: 18)
-                        .overlay(
-                            Circle()
-                                .stroke(
-                                    selectedCloudColor == color ? Color.black.opacity(0.75) : Color.black.opacity(0.18),
-                                    lineWidth: 2
-                                )
-                        )
-                }
-                .buttonStyle(.plain)
-            }
-        }
-    }
-
-    private func swatchColor(for color: CloudColor) -> Color {
-        switch color {
-        case .default:
-            return Color.white
-        case .blue:
-            return Color(red: 0.43, green: 0.69, blue: 0.97)
-        case .green:
-            return Color(red: 0.46, green: 0.81, blue: 0.59)
-        case .pink:
-            return Color(red: 0.95, green: 0.58, blue: 0.75)
-        case .red:
-            return Color(red: 0.95, green: 0.43, blue: 0.43)
-        }
-    }
-
-    private var settingsPanel: some View {
-        VStack(spacing: 14) {
-            timerSliderRow(
-                title: "focus minutes",
-                value: $vm.focusMinutes,
-                range: 1...120
-            )
-            timerSliderRow(
-                title: "break minutes",
-                value: $vm.breakMinutes,
-                range: 1...60
-            )
-            timerSliderRow(
-                title: "sessions before long break",
-                value: $vm.sessionsUntilLongBreak,
-                range: 1...12
-            )
-            timerSliderRow(
-                title: "long break minutes",
-                value: $vm.longBreakMinutes,
-                range: 1...90
-            )
-
-            Text("progress: \(vm.completedSessionProgressText)")
-                .font(.subheadline)
-                .foregroundStyle(.black.opacity(0.6))
-
-            VStack(alignment: .leading, spacing: 6) {
-                Text("cloud color")
-                    .font(.subheadline)
-                    .foregroundStyle(.black.opacity(0.7))
-                cloudColorPicker
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color.white.opacity(0.82))
-        )
-        .frame(maxWidth: 360)
-    }
-
-    private var characterPicker: some View {
-        HStack(spacing: 10) {
-            ForEach(CharacterType.allCases, id: \.storedValue) { character in
-                Button {
-                    selectedCharacterFamilyValue = character.storedValue
-                } label: {
-                    CharacterView(
-                        character: character,
-                        expression: .idle,
-                        cloudColor: selectedCloudColor,
-                        isLocked: false
-                    )
-                    .frame(width: 42, height: 32)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(
-                                selectedCharacterFamily == character ? Color.black.opacity(0.7) : Color.clear,
-                                lineWidth: 2
-                            )
-                    )
-                }
-                .buttonStyle(.plain)
-            }
-        }
-    }
-
-    private func timerSliderRow(title: String, value: Binding<Int>, range: ClosedRange<Int>) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Text(title)
-                    .font(.subheadline)
-                    .foregroundStyle(.black.opacity(0.7))
-                Spacer()
-                Text("\(value.wrappedValue)")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.black.opacity(0.8))
-            }
-
-            Slider(
-                value: Binding(
-                    get: { Double(value.wrappedValue) },
-                    set: { value.wrappedValue = Int($0.rounded()) }
-                ),
-                in: Double(range.lowerBound)...Double(range.upperBound),
-                step: 1
-            )
-            .tint(Color(red: 0.94, green: 0.79, blue: 0.39))
-        }
     }
 }
 
@@ -441,10 +355,11 @@ struct SpeechBubbleView: View {
                 alignment: .bottom
             )
             .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 5)
-            .frame(maxWidth: 320)
+            .frame(maxWidth: 340)
             .padding(.bottom, 4)
     }
 }
+
 struct BubbleTail: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()
@@ -468,6 +383,21 @@ struct MainButtonStyle: ButtonStyle {
                     .fill(Color(red: 0.94, green: 0.79, blue: 0.39))
             )
             .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
+    }
+}
+
+struct SecondaryButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.headline)
+            .foregroundStyle(.black.opacity(0.8))
+            .padding(.horizontal, 18)
+            .padding(.vertical, 10)
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(Color.white.opacity(0.82))
+            )
+            .scaleEffect(configuration.isPressed ? 0.98 : 1)
     }
 }
 

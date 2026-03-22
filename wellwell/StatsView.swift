@@ -3,33 +3,31 @@ import Charts
 
 struct StatsView: View {
     @EnvironmentObject var vm: TimerViewModel
-    @EnvironmentObject var purchaseManager: PurchaseManager
 
     var body: some View {
         ZStack {
             Color(red: 0.96, green: 0.95, blue: 0.92)
                 .ignoresSafeArea()
 
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 18) {
                 Text("stats")
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.black.opacity(0.7))
+                    .font(.title2.weight(.semibold))
+                    .foregroundStyle(.black.opacity(0.75))
 
                 HStack(spacing: 12) {
-                    statCard(title: "today's focus", value: "\(vm.todayFocusMinutes)m")
-                    statCard(title: "streak", value: "\(vm.streakDays) days")
-                    statCard(title: "sessions", value: "\(vm.totalCompletedSessions)")
+                    statCard(title: "today's sessions", value: "\(vm.todaySessionCount)")
+                    statCard(title: "completed sessions", value: "\(vm.totalCompletedSessions)")
+                    statCard(title: "total focus", value: "\(vm.totalFocusMinutesAllTime)m")
                 }
 
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("weekly focus")
+                    Text("last 7 days")
                         .font(.headline)
-                        .foregroundStyle(.black.opacity(0.75))
+                        .foregroundStyle(.black.opacity(0.72))
 
-                    Chart(displayedWeeklyData) { point in
+                    Chart(vm.weeklyFocusSummary, id: \.dayLabel) { point in
                         BarMark(
-                            x: .value("day", point.day),
+                            x: .value("day", point.dayLabel),
                             y: .value("minutes", point.minutes)
                         )
                         .foregroundStyle(Color(red: 0.94, green: 0.79, blue: 0.39))
@@ -43,12 +41,28 @@ struct StatsView: View {
                 .padding(16)
                 .background(
                     RoundedRectangle(cornerRadius: 16)
-                        .fill(Color.white.opacity(0.82))
+                        .fill(Color.white.opacity(0.84))
                 )
 
-                Text(historyLabel)
-                    .font(.subheadline)
-                    .foregroundStyle(.black.opacity(0.6))
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("reflection")
+                        .font(.headline)
+                    Text("coverage: \(vm.reflectionCompletionRate)%")
+                        .font(.subheadline)
+                    Text("productivity: \(vm.productivitySummaryText)")
+                        .font(.subheadline)
+                    if let feeling = vm.averageFeelingScore {
+                        Text(String(format: "average feeling: %.1f / 3", feeling))
+                            .font(.subheadline)
+                    }
+                }
+                .foregroundStyle(.black.opacity(0.68))
+                .padding(14)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color.white.opacity(0.84))
+                )
 
                 Spacer(minLength: 0)
             }
@@ -57,28 +71,11 @@ struct StatsView: View {
         }
     }
 
-    private var displayedWeeklyData: [WeeklyFocusPoint] {
-        let allData = vm.weeklyFocusSummary.map { WeeklyFocusPoint(day: $0.dayLabel, minutes: $0.minutes) }
-        if purchaseManager.isPro {
-            return allData
-        }
-
-        return Array(allData.prefix(3))
-    }
-
-    private var historyLabel: String {
-        if purchaseManager.isPro {
-            return "pro: full history unlocked"
-        }
-
-        return "free: showing limited history"
-    }
-
     private func statCard(title: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
                 .font(.subheadline)
-                .foregroundStyle(.black.opacity(0.6))
+                .foregroundStyle(.black.opacity(0.58))
 
             Text(value)
                 .font(.title3.weight(.semibold))
@@ -88,13 +85,7 @@ struct StatsView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 14)
-                .fill(Color.white.opacity(0.82))
+                .fill(Color.white.opacity(0.84))
         )
     }
-}
-
-private struct WeeklyFocusPoint: Identifiable {
-    let id = UUID()
-    let day: String
-    let minutes: Int
 }
