@@ -106,17 +106,6 @@ struct MenuBarContentView: View {
                     Text("take an earned break")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                    HStack(spacing: 8) {
-                        Button("take an earned break") {
-                            vm.declineAnotherSession()
-                        }
-                        .buttonStyle(.borderedProminent)
-
-                        Button("continue session at your own risk") {
-                            vm.continueWithAnotherSession()
-                        }
-                        .buttonStyle(.bordered)
-                    }
                 }
                 .padding(8)
                 .background(
@@ -141,6 +130,13 @@ struct MenuBarContentView: View {
 
                 Button("continue session at your own risk") {
                     vm.startWork()
+                }
+                .buttonStyle(.bordered)
+            }
+
+            if vm.state == .focusRunning {
+                Button("take an earned break") {
+                    vm.startBreak()
                 }
                 .buttonStyle(.bordered)
             }
