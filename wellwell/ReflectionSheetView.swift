@@ -14,16 +14,16 @@ struct ReflectionSheetView: View {
         NavigationStack {
             Form {
                 Section("quick reflection") {
-                    TextField("what did you work on?", text: $workText)
+                    TextField("what did you focus on?", text: $workText)
 
-                    Picker("did it feel productive?", selection: $productivity) {
+                    Picker("how did it feel?", selection: $productivity) {
                         ForEach(ReflectionProductivity.allCases) { value in
                             Text(value.label).tag(value)
                         }
                     }
                     .pickerStyle(.segmented)
 
-                    Toggle("add feeling rating", isOn: $includeFeeling)
+                    Toggle("add a quick feeling check", isOn: $includeFeeling)
                     if includeFeeling {
                         Picker("feeling", selection: $feeling) {
                             Text("1").tag(1)
@@ -34,7 +34,7 @@ struct ReflectionSheetView: View {
                     }
                 }
             }
-            .navigationTitle("session reflection")
+            .navigationTitle("that counted")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {

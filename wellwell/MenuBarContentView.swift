@@ -86,10 +86,11 @@ struct MenuBarContentView: View {
             }
 
             if vm.state == .idle {
-                Button("start work") {
+                Button("start focus") {
                     vm.startWork()
                 }
                 .buttonStyle(.borderedProminent)
+                .keyboardShortcut("f", modifiers: [.command, .shift])
             }
 
             if vm.state == .waitingForBreakConfirmation || vm.state == .overdueBreak {
@@ -118,6 +119,7 @@ struct MenuBarContentView: View {
             Button("open main window") {
                 openWindow(id: "main")
             }
+            .keyboardShortcut("1", modifiers: [.command])
 
             Button("quit wellwell") {
                 NSApplication.shared.terminate(nil)
@@ -138,9 +140,9 @@ struct MenuBarContentView: View {
     private var statusText: String {
         switch vm.state {
         case .idle:
-            return "ready to start"
+            return vm.hasCompletedSessionToday ? "you showed up today" : "ready when you are"
         case .focusRunning:
-            return "focus session"
+            return "quiet focus"
         case .waitingForBreakConfirmation:
             return "time for a \(vm.upcomingBreakLabel)"
         case .breakRunning:
@@ -148,18 +150,18 @@ struct MenuBarContentView: View {
         case .waitingForWorkConfirmation:
             return "ready to continue?"
         case .overdueBreak:
-            return "break overdue"
+            return "gentle break reminder"
         case .overdueWork:
-            return "work overdue"
+            return "ready to restart"
         }
     }
 
     private var bubbleText: String {
         switch vm.state {
         case .idle:
-            return "i'm ready when you are"
+            return vm.todaySessionCount == 0 ? "i’m ready when you are" : "one focused block is enough for today."
         case .focusRunning:
-            return "keep up the good work!"
+            return "let’s keep this one simple."
         case .waitingForBreakConfirmation:
             return "time for a \(vm.upcomingBreakLabel)"
         case .breakRunning:
@@ -167,9 +169,9 @@ struct MenuBarContentView: View {
         case .waitingForWorkConfirmation:
             return "ready to continue?"
         case .overdueBreak:
-            return "why aren’t you on a break yet??"
+            return "a short break still counts."
         case .overdueWork:
-            return "are you asleep? it’s been a long break"
+            return "you can always begin again."
         }
     }
 

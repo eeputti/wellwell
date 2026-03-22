@@ -25,6 +25,19 @@ struct wellwellApp: App {
                     await purchaseManager.prepare()
                 }
         }
+        .commands {
+            CommandMenu("Focus") {
+                Button("Start Focus Session") {
+                    vm.startWork()
+                }
+                .keyboardShortcut("f", modifiers: [.command, .shift])
+
+                Button("Reset Timer") {
+                    vm.resetTimer()
+                }
+                .keyboardShortcut("r", modifiers: [.command, .shift])
+            }
+        }
 
         MenuBarExtra {
             MenuBarContentView()
