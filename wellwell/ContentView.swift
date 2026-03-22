@@ -14,6 +14,10 @@ struct ContentView: View {
     @AppStorage("selectedCloudColor") private var selectedCloudColor = CloudColorOption.defaultCloud.rawValue
     @State private var showStats = false
 
+    @State private var isShowingStats = false
+    @State private var isShowingSettings = false
+    @State private var isShowingHistory = false
+
     var body: some View {
         ZStack {
             Color(red: 0.96, green: 0.95, blue: 0.92)
@@ -33,12 +37,13 @@ struct ContentView: View {
                 SpeechBubbleView(text: bubbleText)
                     .transition(.opacity.combined(with: .scale))
                     .animation(.easeInOut(duration: 0.25), value: bubbleText)
+
                 CharacterView(
                     character: selectedCharacterFamily,
                     expression: currentExpression,
                     isLocked: false
                 )
-                    .frame(width: 220, height: 160)
+                .frame(width: 220, height: 160)
 
                 Text(vm.formattedTime())
                     .font(.system(size: 80, weight: .light, design: .rounded))
@@ -50,8 +55,7 @@ struct ContentView: View {
                     .foregroundStyle(.black.opacity(0.55))
 
                 if vm.state == .idle {
-                    idleSecondaryMenu
-
+                    idleCompanionPanel
                     settingsPanel
 
                     Button("start work") {
@@ -86,6 +90,16 @@ struct ContentView: View {
         }
         .onAppear {
             vm.triggerOpeningReaction()
+        }
+        .sheet(isPresented: $isShowingStats) {
+            StatsView()
+        }
+        .sheet(isPresented: $isShowingSettings) {
+            TimerSettingsView()
+                .environmentObject(vm)
+        }
+        .sheet(isPresented: $isShowingHistory) {
+            SessionHistoryView(sessions: vm.recentSessions)
         }
         .animation(.easeInOut(duration: 0.25), value: vm.showStreakReaction)
         .sheet(isPresented: $showStats) {
@@ -155,6 +169,47 @@ struct ContentView: View {
         CharacterType(storedValue: selectedCharacterFamilyValue)
     }
 
+    private var selectedCloudColor: CloudColor {
+        CloudColor(storedValue: selectedCloudColorValue)
+    }
+
+    private var cloudColorPicker: some View {
+        HStack(spacing: 10) {
+            ForEach(CloudColor.allCases, id: \.storedValue) { color in
+                Button {
+                    selectedCloudColorValue = color.storedValue
+                } label: {
+                    Circle()
+                        .fill(swatchColor(for: color))
+                        .frame(width: 18, height: 18)
+                        .overlay(
+                            Circle()
+                                .stroke(
+                                    selectedCloudColor == color ? Color.black.opacity(0.75) : Color.clear,
+                                    lineWidth: 2
+                                )
+                        )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private func swatchColor(for color: CloudColor) -> Color {
+        switch color {
+        case .default:
+            return Color.white
+        case .blue:
+            return Color(red: 0.43, green: 0.69, blue: 0.97)
+        case .green:
+            return Color(red: 0.46, green: 0.81, blue: 0.59)
+        case .pink:
+            return Color(red: 0.95, green: 0.58, blue: 0.75)
+        case .red:
+            return Color(red: 0.95, green: 0.43, blue: 0.43)
+        }
+    }
+
     private var settingsPanel: some View {
         VStack(spacing: 14) {
             timerSliderRow(
@@ -181,6 +236,8 @@ struct ContentView: View {
             Text("progress: \(vm.completedSessionProgressText)")
                 .font(.subheadline)
                 .foregroundStyle(.black.opacity(0.6))
+
+            cloudColorPicker
         }
         .padding(16)
         .background(
@@ -190,61 +247,63 @@ struct ContentView: View {
         .frame(maxWidth: 360)
     }
 
-    private var idleSecondaryMenu: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("choose your cloud")
-                .font(.caption.weight(.semibold))
+    private var idleCompanionPanel: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            TextField("what are you focusing on?", text: $vm.sessionLabel)
+                .textFieldStyle(.plain)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.white.opacity(0.95))
+                )
+
+            Text(idleMotivationLine)
+                .font(.subheadline.weight(.medium))
                 .foregroundStyle(.black.opacity(0.62))
 
-            HStack(spacing: 10) {
-                ForEach(CloudColorOption.allCases) { option in
-                    Button {
-                        selectedCloudColor = option.rawValue
-                    } label: {
-                        Circle()
-                            .fill(option.color)
-                            .frame(width: 18, height: 18)
-                            .overlay(
-                                Circle()
-                                    .stroke(.black.opacity(0.2), lineWidth: 1)
-                            )
-                            .overlay {
-                                if selectedCloudColor == option.rawValue {
-                                    Image(systemName: "checkmark")
-                                        .font(.system(size: 8, weight: .bold))
-                                        .foregroundStyle(.white)
-                                }
-                            }
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("\(option.label) cloud")
-                }
-
-                Spacer()
-
-                Button {
-                    showStats = true
-                } label: {
-                    Label("view stats", systemImage: "chart.bar.xaxis")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.black.opacity(0.75))
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .background(
-                            RoundedRectangle(cornerRadius: 10)
-                                .fill(Color.white.opacity(0.9))
-                        )
-                }
-                .buttonStyle(.plain)
+            HStack(spacing: 12) {
+                idleStatPill(title: "today", value: "\(vm.todayFocusMinutes)m")
+                idleStatPill(title: "streak", value: "\(vm.currentStreakDays)d")
+                idleStatPill(title: "total", value: "\(vm.totalSessionsCompleted)")
             }
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
+        .padding(14)
         .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white.opacity(0.75))
+            RoundedRectangle(cornerRadius: 18)
+                .fill(Color.white.opacity(0.8))
         )
-        .frame(maxWidth: 360)
+        .frame(maxWidth: 360, alignment: .leading)
+    }
+
+    private func idleStatPill(title: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .font(.caption)
+                .foregroundStyle(.black.opacity(0.45))
+            Text(value)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.black.opacity(0.78))
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.white.opacity(0.9))
+        )
+    }
+
+    private var idleMotivationLine: String {
+        let lines = [
+            "small steps count. this one is yours ☁️",
+            "one calm session at a time.",
+            "your cloud is cheering quietly for you.",
+            "just begin; you can adjust as you go.",
+            "focus gently, then celebrate the tiny win."
+        ]
+        let seed = Calendar.current.ordinality(of: .day, in: .year, for: .now) ?? 0
+        return lines[(seed + vm.totalSessionsCompleted) % lines.count]
     }
 
     private func timerSliderRow(title: String, value: Binding<Int>, range: ClosedRange<Int>) -> some View {

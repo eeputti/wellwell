@@ -10,19 +10,37 @@ import SwiftUI
 struct CharacterView: View {
     let character: CharacterType
     let expression: ExpressionType
+    let cloudColor: CloudColor?
     let isLocked: Bool
     var onLockedTap: (() -> Void)? = nil
 
-    @AppStorage("selectedCloudColor") private var selectedCloudColor = CloudColorOption.defaultCloud.rawValue
-
+    @AppStorage("selectedCloudColor") private var selectedCloudColorValue = CloudColor.default.storedValue
     @State private var floatUp = false
+
+    init(
+        character: CharacterType,
+        expression: ExpressionType,
+        cloudColor: CloudColor? = nil,
+        isLocked: Bool,
+        onLockedTap: (() -> Void)? = nil
+    ) {
+        self.character = character
+        self.expression = expression
+        self.cloudColor = cloudColor
+        self.isLocked = isLocked
+        self.onLockedTap = onLockedTap
+    }
 
     private var expressionKey: String {
         String(describing: expression).lowercased()
     }
 
+    private var resolvedCloudColor: CloudColor {
+        cloudColor ?? CloudColor(storedValue: selectedCloudColorValue)
+    }
+
     private var imageName: String {
-        character.assetName(for: expression, cloudColorSuffix: selectedCloudColor)
+        character.assetName(for: expression, cloudColor: resolvedCloudColor)
     }
 
     private var isIdleExpression: Bool {
