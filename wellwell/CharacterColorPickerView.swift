@@ -15,7 +15,6 @@ struct CharacterColorPickerView: View {
         HStack(spacing: spacing) {
             ForEach(CloudColor.allCases, id: \.storedValue) { color in
                 Button {
-                    guard !color.isPremium else { return }
                     selectedCloudColorValue = color.storedValue
                 } label: {
                     Circle()
