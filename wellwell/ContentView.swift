@@ -104,7 +104,7 @@ struct ContentView: View {
                 cloudColor: selectedCloudColor,
                 isLocked: false
             )
-            .frame(width: 92, height: 68)
+            .frame(width: 72, height: 52)
 
             Spacer(minLength: 8)
 
@@ -432,7 +432,7 @@ struct ContentView: View {
     }
 
     private func shouldUseCompactLayout(for size: CGSize) -> Bool {
-        size.width < 640 || size.height < 520
+        size.width < 560 || size.height < 440
     }
 
     private func startSessionWithRitual() {
