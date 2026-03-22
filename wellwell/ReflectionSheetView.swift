@@ -36,6 +36,15 @@ struct ReflectionSheetView: View {
             }
             .navigationTitle("session reflection")
             .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        onSkip()
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                    }
+                    .accessibilityLabel("close reflection")
+                }
                 ToolbarItem(placement: .cancellationAction) {
                     Button("skip") {
                         onSkip()
