@@ -26,7 +26,11 @@ struct ContentView: View {
                     }
 
                     if vm.showStreakReaction && !isCompact {
-                        StreakReactionView(streakDays: vm.streakDays, mood: vm.streakMood)
+                        StreakReactionView(
+                            streakDays: vm.streakDays,
+                            mood: vm.streakMood,
+                            milestoneMessage: vm.streakMilestoneMessage
+                        )
                             .transition(.opacity.combined(with: .scale))
                     }
 
@@ -395,6 +399,7 @@ struct ContentView: View {
 struct StreakReactionView: View {
     let streakDays: Int
     let mood: TimerViewModel.StreakMood
+    let milestoneMessage: String?
 
     @State private var floatUp = false
     @State private var pulse = false
@@ -477,6 +482,9 @@ struct StreakReactionView: View {
     }
 
     private var reactionText: String {
+        if let milestoneMessage {
+            return milestoneMessage
+        }
         switch mood {
         case .sleepy:
             return "shh... warming up ☁️"
