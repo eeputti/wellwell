@@ -25,8 +25,6 @@ struct MenuBarContentView: View {
     var body: some View {
         VStack(spacing: 14) {
             HStack {
-                Text("Focus Time")
-                    .font(.headline.weight(.semibold))
                 Spacer()
                 Menu {
                     Button("settings") {
@@ -48,6 +46,7 @@ struct MenuBarContentView: View {
                     Image(systemName: "ellipsis.circle")
                         .font(.title3.weight(.semibold))
                 }
+                .menuIndicator(.hidden)
                 .menuStyle(.borderlessButton)
                 .fixedSize()
             }
