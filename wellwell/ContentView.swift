@@ -164,6 +164,37 @@ struct ContentView: View {
         )
     }
 
+    private var consistencyCard: some View {
+        HStack(spacing: 10) {
+            Label {
+                Text("\(vm.streakDays)-day streak")
+                    .font(.subheadline.weight(.semibold))
+            } icon: {
+                Image(systemName: vm.streakDays >= 3 ? "flame.fill" : "flame")
+                    .foregroundStyle(vm.streakDays >= 3 ? .orange : .secondary)
+            }
+
+            Spacer()
+
+            Text("\(vm.todaySessionCount) today")
+                .font(.caption.weight(.medium))
+                .foregroundStyle(.black.opacity(0.58))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(
+                    Capsule()
+                        .fill(Color.black.opacity(0.06))
+                )
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.white.opacity(0.82))
+        )
+    }
+
     private var timerCard: some View {
         VStack(spacing: 12) {
             Text(vm.formattedTime())
