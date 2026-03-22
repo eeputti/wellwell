@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import AppKit
 
 struct CharacterView: View {
     let character: CharacterType
@@ -43,17 +44,33 @@ struct CharacterView: View {
         character.assetName(for: expression, cloudColor: resolvedCloudColor)
     }
 
+    private var renderableImageName: String? {
+        let trimmed = imageName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty, NSImage(named: trimmed) != nil {
+            return trimmed
+        }
+
+        let fallback = "well_starter_idle_default"
+        if NSImage(named: fallback) != nil {
+            return fallback
+        }
+
+        return nil
+    }
+
     private var isIdleExpression: Bool {
         expressionKey == "idle"
     }
 
     var body: some View {
         ZStack {
-            Image(imageName)
-                .resizable()
-                .scaledToFit()
-                .id(imageName)
-                .transition(.opacity)
+            if let renderableImageName, let image = NSImage(named: renderableImageName) {
+                Image(nsImage: image)
+                    .resizable()
+                    .scaledToFit()
+                    .id(renderableImageName)
+                    .transition(.opacity)
+            }
         }
         .offset(y: isIdleExpression && !isLocked ? (floatUp ? -3 : 3) : 0)
         .grayscale(isLocked ? 1 : 0)
