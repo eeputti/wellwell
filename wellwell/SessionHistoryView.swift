@@ -21,7 +21,8 @@ struct SessionHistoryView: View {
                         description: Text("Complete a focus session to start building your recent history.")
                     )
                 } else {
-                    List(sessions) { session in
+                    List(sessions.indices, id: \.self) { index in
+                        let session = sessions[index]
                         VStack(alignment: .leading, spacing: 4) {
                             Text(session.type.title)
                                 .font(.headline)
