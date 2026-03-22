@@ -62,7 +62,7 @@ struct ContentView: View {
                 }
             )
         }
-        .fullScreenCover(isPresented: Binding(get: { !hasCompletedOnboarding }, set: { _ in })) {
+        .sheet(isPresented: Binding(get: { !hasCompletedOnboarding }, set: { _ in })) {
             OnboardingView()
         }
         .animation(.easeInOut(duration: 0.25), value: vm.showStreakReaction)

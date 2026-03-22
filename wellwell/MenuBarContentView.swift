@@ -9,6 +9,7 @@
 
 import SwiftUI
 import AppKit
+import StoreKit
 
 struct MenuBarContentView: View {
     @EnvironmentObject var vm: TimerViewModel
@@ -38,7 +39,6 @@ struct MenuBarContentView: View {
                 .foregroundStyle(.secondary)
             
             if vm.state == .idle {
-                idleCompanionPanel
                 VStack(alignment: .leading, spacing: 4) {
                     Text("cloud color")
                         .font(.caption)

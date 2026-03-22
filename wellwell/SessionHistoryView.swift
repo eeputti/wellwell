@@ -21,19 +21,22 @@ struct SessionHistoryView: View {
                         description: Text("Complete a focus session to start building your recent history.")
                     )
                 } else {
-                    List(sessions.indices, id: \.self) { index in
-                        let session = sessions[index]
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(session.type.title)
-                                .font(.headline)
-                            Text(formatter.string(from: session.completedAt))
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                            Text("\(session.durationMinutes) min")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
+                    List {
+                        ForEach(Array(sessions.enumerated()), id: \.offset) { _, session in
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("focus session")
+                                    .font(.headline)
+
+                                Text(formatter.string(from: session.completedAt))
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+
+                                Text("\(session.focusSeconds / 60) min")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding(.vertical, 2)
                         }
-                        .padding(.vertical, 2)
                     }
                 }
             }
