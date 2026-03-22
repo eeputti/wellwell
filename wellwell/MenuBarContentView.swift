@@ -14,13 +14,14 @@ struct MenuBarContentView: View {
     @EnvironmentObject var vm: TimerViewModel
     @EnvironmentObject var purchaseManager: PurchaseManager
     @Environment(\.openWindow) private var openWindow
+    @AppStorage("selectedCharacterFamily") private var selectedCharacterFamilyValue = CharacterType.cloud.storedValue
     @State private var showPaywall = false
     @State private var showProSettings = false
 
     var body: some View {
         VStack(spacing: 14) {
             CharacterView(
-                character: .cloud,
+                character: selectedCharacterFamily,
                 expression: currentExpression,
                 isLocked: false
             )
@@ -150,6 +151,10 @@ struct MenuBarContentView: View {
         case .overdueWork:
             return .longBreak
         }
+    }
+
+    private var selectedCharacterFamily: CharacterType {
+        CharacterType(storedValue: selectedCharacterFamilyValue)
     }
 
     private var settingsPanel: some View {

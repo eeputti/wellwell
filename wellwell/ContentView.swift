@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject var vm: TimerViewModel
+    @AppStorage("selectedCharacterFamily") private var selectedCharacterFamilyValue = CharacterType.cloud.storedValue
 
     var body: some View {
         ZStack {
@@ -30,7 +31,7 @@ struct ContentView: View {
                     .transition(.opacity.combined(with: .scale))
                     .animation(.easeInOut(duration: 0.25), value: bubbleText)
                 CharacterView(
-                    character: .cloud,
+                    character: selectedCharacterFamily,
                     expression: currentExpression,
                     isLocked: false
                 )
@@ -139,6 +140,10 @@ struct ContentView: View {
         case .overdueWork:
             return .longBreak
         }
+    }
+
+    private var selectedCharacterFamily: CharacterType {
+        CharacterType(storedValue: selectedCharacterFamilyValue)
     }
 
     private var settingsPanel: some View {

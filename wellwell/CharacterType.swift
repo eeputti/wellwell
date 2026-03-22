@@ -15,6 +15,29 @@ enum CharacterType: CaseIterable {
     case rainbow
     case leaf
 
+    var storedValue: String {
+        switch self {
+        case .cloud: return "cloud"
+        case .star: return "star"
+        case .moon: return "moon"
+        case .rainCloud: return "rainCloud"
+        case .rainbow: return "rainbow"
+        case .leaf: return "leaf"
+        }
+    }
+
+    init(storedValue: String) {
+        switch storedValue {
+        case "cloud": self = .cloud
+        case "star": self = .star
+        case "moon": self = .moon
+        case "rainCloud": self = .rainCloud
+        case "rainbow": self = .rainbow
+        case "leaf": self = .leaf
+        default: self = .cloud
+        }
+    }
+
     func assetName(for expression: ExpressionType) -> String {
         switch expression {
         case .idle:
