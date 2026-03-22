@@ -4,23 +4,36 @@ import Charts
 struct StatsView: View {
     @EnvironmentObject var vm: TimerViewModel
     @Environment(\.dismiss) private var dismiss
+    private let streakWeekdayColumns = Array(repeating: GridItem(.flexible(minimum: 24, maximum: 36), spacing: 10), count: 7)
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                Color(red: 0.96, green: 0.95, blue: 0.92)
-                    .ignoresSafeArea()
+        ZStack(alignment: .topTrailing) {
+            Color(red: 0.96, green: 0.95, blue: 0.92)
+                .ignoresSafeArea()
 
+            ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
-                    Text("your focus story")
-                        .font(.title2.weight(.semibold))
-                        .foregroundStyle(.black.opacity(0.75))
+                    HStack(alignment: .top) {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("your focus story")
+                                .font(.title2.weight(.semibold))
+                                .foregroundStyle(.black.opacity(0.75))
+                            Text("\(vm.currentYear)")
+                                .font(.title3.weight(.medium))
+                                .foregroundStyle(.black.opacity(0.55))
+                        }
+                        Spacer()
+                    }
 
                     HStack(spacing: 12) {
                         statCard(title: "today", value: "\(vm.todaySessionCount) sessions")
                         statCard(title: "this week", value: "\(vm.weeklySessionsCount) sessions")
                         statCard(title: "all-time focus", value: formattedDuration(minutes: vm.totalFocusMinutesAllTime))
                     }
+
+                    streakOverviewCard
+
+                    yearlyOverviewCard
 
                     weeklyIdentityCard
 
@@ -91,19 +104,23 @@ struct StatsView: View {
 
                     Spacer(minLength: 0)
                 }
-                .padding(24)
+                .padding(.horizontal, 24)
+                .padding(.vertical, 20)
                 .frame(minWidth: 560, minHeight: 420, alignment: .topLeading)
             }
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark")
-                    }
-                    .accessibilityLabel("close stats")
-                }
+
+            Button {
+                dismiss()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(.black.opacity(0.7))
+                    .frame(width: 30, height: 30)
+                    .background(Circle().fill(Color.white.opacity(0.92)))
             }
+            .buttonStyle(.plain)
+            .padding(16)
+            .accessibilityLabel("close stats")
         }
     }
 
@@ -135,6 +152,73 @@ struct StatsView: View {
                 Text(line)
                     .font(.subheadline)
                     .foregroundStyle(.black.opacity(0.66))
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.white.opacity(0.84))
+        )
+    }
+
+    private var yearlyOverviewCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("year at a glance")
+                .font(.headline)
+                .foregroundStyle(.black.opacity(0.72))
+
+            Chart(vm.currentYearMonthlySummary) { month in
+                BarMark(
+                    x: .value("month", month.monthLabel),
+                    y: .value("sessions", month.sessions)
+                )
+                .foregroundStyle(Color(red: 0.43, green: 0.74, blue: 0.95))
+                .cornerRadius(3)
+            }
+            .frame(height: 120)
+            .chartYAxis {
+                AxisMarks(position: .leading)
+            }
+
+            LazyVGrid(columns: streakWeekdayColumns, spacing: 8) {
+                ForEach(vm.currentMonthActivityGrid) { day in
+                    VStack(spacing: 4) {
+                        Text(day.isInCurrentMonth ? "\(day.dayNumber)" : "")
+                            .font(.caption2)
+                            .foregroundStyle(.black.opacity(0.5))
+                        Circle()
+                            .fill(dayFillColor(for: day.sessionCount, isVisible: day.isInCurrentMonth))
+                            .frame(width: 22, height: 22)
+                            .overlay {
+                                if day.sessionCount > 0 && day.isInCurrentMonth {
+                                    Text(day.sessionCount > 9 ? "9+" : "\(day.sessionCount)")
+                                        .font(.system(size: 8, weight: .bold))
+                                        .foregroundStyle(.white)
+                                }
+                            }
+                    }
+                }
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.white.opacity(0.84))
+        )
+    }
+
+    private var streakOverviewCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("streaks")
+                .font(.headline)
+                .foregroundStyle(.black.opacity(0.72))
+
+            HStack(spacing: 14) {
+                statCard(title: "current streak", value: "\(vm.currentStreakDays) day\(vm.currentStreakDays == 1 ? "" : "s")")
+                statCard(title: "longest streak", value: "\(vm.longestStreakDays) day\(vm.longestStreakDays == 1 ? "" : "s")")
+                statCard(title: "active days", value: "\(vm.totalActiveDays)")
             }
         }
         .padding(14)
@@ -226,5 +310,19 @@ struct StatsView: View {
             return "\(hours)h"
         }
         return "\(remainder)m"
+    }
+
+    private func dayFillColor(for sessionCount: Int, isVisible: Bool) -> Color {
+        guard isVisible else { return .clear }
+        switch sessionCount {
+        case 0:
+            return Color.black.opacity(0.08)
+        case 1:
+            return Color(red: 0.98, green: 0.68, blue: 0.31)
+        case 2:
+            return Color(red: 0.97, green: 0.52, blue: 0.21)
+        default:
+            return Color(red: 0.93, green: 0.34, blue: 0.16)
+        }
     }
 }

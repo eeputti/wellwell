@@ -9,6 +9,23 @@ import Foundation
 import Combine
 
 final class TimerViewModel: ObservableObject {
+    struct MonthlyFocusPoint: Identifiable {
+        let id: String
+        let monthStart: Date
+        let monthLabel: String
+        let sessions: Int
+        let minutes: Int
+    }
+
+    struct MonthDayActivity: Identifiable {
+        let id: Date
+        let date: Date
+        let weekdayLabel: String
+        let dayNumber: Int
+        let sessionCount: Int
+        let isInCurrentMonth: Bool
+    }
+
     enum StreakMood {
         case sleepy
         case happy
@@ -418,6 +435,88 @@ final class TimerViewModel: ObservableObject {
         return Double(values.reduce(0, +)) / Double(values.count)
     }
 
+    var currentYear: Int {
+        Calendar.current.component(.year, from: Date())
+    }
+
+    var currentStreakDays: Int {
+        calculateStreakDays(from: sessionHistory)
+    }
+
+    var longestStreakDays: Int {
+        calculateLongestStreakDays(from: sessionHistory)
+    }
+
+    var totalActiveDays: Int {
+        let calendar = Calendar.current
+        let uniqueDays = Set(sessionHistory.map { calendar.startOfDay(for: $0.completedAt) })
+        return uniqueDays.count
+    }
+
+    var currentYearMonthlySummary: [MonthlyFocusPoint] {
+        let calendar = Calendar.current
+        let today = Date()
+        let year = calendar.component(.year, from: today)
+        var points: [MonthlyFocusPoint] = []
+
+        for month in 1...12 {
+            var components = DateComponents()
+            components.year = year
+            components.month = month
+            components.day = 1
+            guard let monthStart = calendar.date(from: components),
+                  let nextMonth = calendar.date(byAdding: .month, value: 1, to: monthStart) else {
+                continue
+            }
+
+            let sessions = sessionHistory.filter { $0.completedAt >= monthStart && $0.completedAt < nextMonth }
+            let minutes = sessions.reduce(0) { $0 + ($1.focusSeconds / 60) }
+            let label = monthStart.formatted(.dateTime.month(.abbreviated))
+            points.append(
+                MonthlyFocusPoint(
+                    id: "\(year)-\(month)",
+                    monthStart: monthStart,
+                    monthLabel: label.uppercased(),
+                    sessions: sessions.count,
+                    minutes: minutes
+                )
+            )
+        }
+
+        return points
+    }
+
+    var currentMonthActivityGrid: [MonthDayActivity] {
+        let calendar = Calendar.current
+        let today = Date()
+        guard let monthInterval = calendar.dateInterval(of: .month, for: today) else {
+            return []
+        }
+
+        let monthDays = calendar.range(of: .day, in: .month, for: monthInterval.start)?.count ?? 30
+        let firstWeekday = calendar.component(.weekday, from: monthInterval.start)
+        let calendarFirstWeekday = calendar.firstWeekday
+        let leadingDays = (firstWeekday - calendarFirstWeekday + 7) % 7
+
+        let totalCells = ((leadingDays + monthDays + 6) / 7) * 7
+        return (0..<totalCells).compactMap { offset in
+            guard let date = calendar.date(byAdding: .day, value: offset - leadingDays, to: monthInterval.start) else {
+                return nil
+            }
+            let start = calendar.startOfDay(for: date)
+            let next = calendar.date(byAdding: .day, value: 1, to: start) ?? start
+            let sessions = sessionHistory.filter { $0.completedAt >= start && $0.completedAt < next }
+            return MonthDayActivity(
+                id: start,
+                date: date,
+                weekdayLabel: date.formatted(.dateTime.weekday(.narrow)),
+                dayNumber: calendar.component(.day, from: date),
+                sessionCount: sessions.count,
+                isInCurrentMonth: monthInterval.contains(date)
+            )
+        }
+    }
+
     private func sanitized(_ value: Int, fallback: Int, range: ClosedRange<Int>) -> Int {
         guard value > 0 else { return fallback }
         return min(max(value, range.lowerBound), range.upperBound)
@@ -545,6 +644,30 @@ final class TimerViewModel: ObservableObject {
             cursor = previous
         }
         return streak
+    }
+
+    private func calculateLongestStreakDays(from history: [SessionRecord]) -> Int {
+        let calendar = Calendar.current
+        let uniqueDays = Set(history.map { calendar.startOfDay(for: $0.completedAt) })
+        guard !uniqueDays.isEmpty else { return 0 }
+
+        let sortedDays = uniqueDays.sorted()
+        var longest = 1
+        var running = 1
+
+        for index in 1..<sortedDays.count {
+            let previous = sortedDays[index - 1]
+            let current = sortedDays[index]
+            let diff = calendar.dateComponents([.day], from: previous, to: current).day ?? 0
+            if diff == 1 {
+                running += 1
+                longest = max(longest, running)
+            } else {
+                running = 1
+            }
+        }
+
+        return longest
     }
 
     private func mood(for streakDays: Int) -> StreakMood {
