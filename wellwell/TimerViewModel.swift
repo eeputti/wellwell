@@ -62,6 +62,7 @@ final class TimerViewModel: ObservableObject {
     @Published var pendingReflectionSessionID: UUID?
     @Published var showPostSessionFlow: Bool = false
     @Published private(set) var latestCompletedSessionID: UUID?
+    @Published var isPaused: Bool = false
     var isUpcomingBreakLong: Bool = false
 
     var focusDuration: Int {
@@ -143,6 +144,7 @@ final class TimerViewModel: ObservableObject {
         cancelAllFollowUps()
         stopTimer()
         showPostSessionFlow = false
+        isPaused = false
 
         state = .focusRunning
         timeRemaining = focusDuration
@@ -158,6 +160,7 @@ final class TimerViewModel: ObservableObject {
         cancelAllFollowUps()
         stopTimer()
         showPostSessionFlow = false
+        isPaused = false
 
         state = .breakRunning
         timeRemaining = isUpcomingBreakLong ? longBreakDuration : breakDuration
@@ -171,6 +174,7 @@ final class TimerViewModel: ObservableObject {
         cancelAllFollowUps()
         stopTimer()
         showPostSessionFlow = false
+        isPaused = false
 
         state = .focusRunning
         timeRemaining = focusDuration
@@ -194,6 +198,7 @@ final class TimerViewModel: ObservableObject {
     }
 
     private func tick() {
+        guard !isPaused else { return }
         guard timeRemaining > 0 else {
             handleTimerFinished()
             return
@@ -204,6 +209,7 @@ final class TimerViewModel: ObservableObject {
 
     private func handleTimerFinished() {
         stopTimer()
+        isPaused = false
 
         switch state {
         case .focusRunning:
@@ -298,8 +304,21 @@ final class TimerViewModel: ObservableObject {
         isUpcomingBreakLong = false
         completedFocusSessions = 0
         showPostSessionFlow = false
+        isPaused = false
         state = .idle
         timeRemaining = focusDuration
+    }
+
+    func pauseCurrentSession() {
+        guard (state == .focusRunning || state == .breakRunning), !isPaused else { return }
+        isPaused = true
+        stopTimer()
+    }
+
+    func continuePausedSession() {
+        guard (state == .focusRunning || state == .breakRunning), isPaused else { return }
+        isPaused = false
+        startTimer()
     }
 
     private func loadSettings() {

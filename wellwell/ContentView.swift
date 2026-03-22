@@ -11,29 +11,41 @@ struct ContentView: View {
     @State private var showSettings = false
 
     var body: some View {
-        ZStack {
-            Color(red: 0.96, green: 0.95, blue: 0.92)
-                .ignoresSafeArea()
+        GeometryReader { proxy in
+            let isCompact = shouldUseCompactLayout(for: proxy.size)
 
-            VStack(spacing: 22) {
-                headerRow
+            ZStack {
+                Color(red: 0.96, green: 0.95, blue: 0.92)
+                    .ignoresSafeArea()
 
-                if vm.showStreakReaction {
-                    StreakReactionView(streakDays: vm.streakDays, mood: vm.streakMood)
-                        .transition(.opacity.combined(with: .scale))
+                VStack(spacing: isCompact ? 14 : 22) {
+                    if isCompact {
+                        compactTopRow
+                    } else {
+                        headerRow
+                    }
+
+                    if vm.showStreakReaction && !isCompact {
+                        StreakReactionView(streakDays: vm.streakDays, mood: vm.streakMood)
+                            .transition(.opacity.combined(with: .scale))
+                    }
+
+                    if isCompact {
+                        compactTimerCard
+                    } else {
+                        cloudCard
+                        consistencyCard
+                        timerCard
+                        if vm.showPostSessionFlow && vm.state == .waitingForBreakConfirmation {
+                            postSessionCard
+                        }
+                    }
+
+                    Spacer(minLength: 0)
                 }
-
-                cloudCard
-                consistencyCard
-                timerCard
-                if vm.showPostSessionFlow && vm.state == .waitingForBreakConfirmation {
-                    postSessionCard
-                }
-
-                Spacer(minLength: 0)
+                .frame(minWidth: 340, minHeight: 290)
+                .padding(isCompact ? 16 : 30)
             }
-            .frame(minWidth: 640, minHeight: 620)
-            .padding(30)
         }
         .onAppear {
             vm.triggerOpeningReaction()
@@ -70,6 +82,24 @@ struct ContentView: View {
             OnboardingView()
         }
         .animation(.easeInOut(duration: 0.25), value: vm.showStreakReaction)
+    }
+
+    private var compactTopRow: some View {
+        HStack(alignment: .top, spacing: 10) {
+            CharacterView(
+                character: .cloud,
+                expression: currentExpression,
+                cloudColor: selectedCloudColor,
+                isLocked: false
+            )
+            .frame(width: 92, height: 68)
+
+            Spacer(minLength: 8)
+
+            SpeechBubbleView(text: bubbleText, fontSize: 14, showTail: false)
+                .frame(maxWidth: 190, alignment: .trailing)
+        }
+        .frame(maxWidth: .infinity, alignment: .topLeading)
     }
 
     private var headerRow: some View {
@@ -145,6 +175,24 @@ struct ContentView: View {
             RoundedRectangle(cornerRadius: 24)
                 .fill(Color.white.opacity(0.82))
         )
+    }
+
+    private var compactTimerCard: some View {
+        VStack(spacing: 12) {
+            Text(vm.formattedTime())
+                .font(.system(size: 70, weight: .light, design: .rounded))
+                .monospacedDigit()
+                .foregroundStyle(.black.opacity(0.84))
+
+            Text(statusText)
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(.black.opacity(0.6))
+                .multilineTextAlignment(.center)
+
+            timerActionButtons
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.vertical, 8)
     }
 
     private var postSessionCard: some View {
@@ -338,6 +386,10 @@ struct ContentView: View {
     private var selectedCloudColor: CloudColor {
         CloudColor(storedValue: selectedCloudColorValue)
     }
+
+    private func shouldUseCompactLayout(for size: CGSize) -> Bool {
+        size.width < 640 || size.height < 520
+    }
 }
 
 struct StreakReactionView: View {
@@ -440,10 +492,12 @@ struct StreakReactionView: View {
 
 struct SpeechBubbleView: View {
     let text: String
+    var fontSize: CGFloat = 18
+    var showTail: Bool = true
 
     var body: some View {
         Text(text)
-            .font(.system(size: 18, weight: .medium, design: .rounded))
+            .font(.system(size: fontSize, weight: .medium, design: .rounded))
             .multilineTextAlignment(.center)
             .foregroundColor(.black.opacity(0.82))
             .padding(.horizontal, 18)
@@ -452,16 +506,17 @@ struct SpeechBubbleView: View {
                 RoundedRectangle(cornerRadius: 22)
                     .fill(Color.white.opacity(0.96))
             )
-            .overlay(
-                BubbleTail()
-                    .fill(Color.white.opacity(0.96))
-                    .frame(width: 22, height: 14)
-                    .offset(y: 18),
-                alignment: .bottom
-            )
+            .overlay(alignment: .bottom) {
+                if showTail {
+                    BubbleTail()
+                        .fill(Color.white.opacity(0.96))
+                        .frame(width: 22, height: 14)
+                        .offset(y: 18)
+                }
+            }
             .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 5)
             .frame(maxWidth: 340)
-            .padding(.bottom, 4)
+            .padding(.bottom, showTail ? 4 : 0)
     }
 }
 
