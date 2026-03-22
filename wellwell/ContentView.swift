@@ -9,7 +9,10 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject var vm: TimerViewModel
+    @EnvironmentObject var purchaseManager: PurchaseManager
     @AppStorage("selectedCharacterFamily") private var selectedCharacterFamilyValue = CharacterType.cloud.storedValue
+    @AppStorage("selectedCloudColor") private var selectedCloudColor = CloudColorOption.defaultCloud.rawValue
+    @State private var showStats = false
 
     var body: some View {
         ZStack {
@@ -47,6 +50,8 @@ struct ContentView: View {
                     .foregroundStyle(.black.opacity(0.55))
 
                 if vm.state == .idle {
+                    idleSecondaryMenu
+
                     settingsPanel
 
                     Button("start work") {
@@ -83,6 +88,10 @@ struct ContentView: View {
             vm.triggerOpeningReaction()
         }
         .animation(.easeInOut(duration: 0.25), value: vm.showStreakReaction)
+        .sheet(isPresented: $showStats) {
+            StatsView()
+                .environmentObject(purchaseManager)
+        }
     }
 
     private var statusText: String {
@@ -177,6 +186,63 @@ struct ContentView: View {
         .background(
             RoundedRectangle(cornerRadius: 20)
                 .fill(Color.white.opacity(0.82))
+        )
+        .frame(maxWidth: 360)
+    }
+
+    private var idleSecondaryMenu: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("choose your cloud")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.black.opacity(0.62))
+
+            HStack(spacing: 10) {
+                ForEach(CloudColorOption.allCases) { option in
+                    Button {
+                        selectedCloudColor = option.rawValue
+                    } label: {
+                        Circle()
+                            .fill(option.color)
+                            .frame(width: 18, height: 18)
+                            .overlay(
+                                Circle()
+                                    .stroke(.black.opacity(0.2), lineWidth: 1)
+                            )
+                            .overlay {
+                                if selectedCloudColor == option.rawValue {
+                                    Image(systemName: "checkmark")
+                                        .font(.system(size: 8, weight: .bold))
+                                        .foregroundStyle(.white)
+                                }
+                            }
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("\(option.label) cloud")
+                }
+
+                Spacer()
+
+                Button {
+                    showStats = true
+                } label: {
+                    Label("view stats", systemImage: "chart.bar.xaxis")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.black.opacity(0.75))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(Color.white.opacity(0.9))
+                        )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.white.opacity(0.75))
         )
         .frame(maxWidth: 360)
     }
