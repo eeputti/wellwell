@@ -68,11 +68,11 @@ struct CharacterView: View {
                 Image(nsImage: image)
                     .resizable()
                     .scaledToFit()
+                    .offset(y: expression == .idle ? (floatUp ? -6 : 6) : 0)
                     .id(renderableImageName)
                     .transition(.opacity)
             }
         }
-        .offset(y: isIdleExpression && !isLocked ? (floatUp ? -3 : 3) : 0)
         .grayscale(isLocked ? 1 : 0)
         .opacity(isLocked ? 0.82 : 1)
         .contentShape(Rectangle())
@@ -85,8 +85,8 @@ struct CharacterView: View {
             }
         }
         .onAppear {
-            if isIdleExpression && !isLocked {
-                floatUp = true
+            if expression == .idle {
+                floatUp.toggle()
             }
         }
         .onChange(of: isIdleExpression) { _, newValue in
@@ -101,7 +101,9 @@ struct CharacterView: View {
         }
         .animation(.easeInOut(duration: 0.27), value: expressionKey)
         .animation(
-            .easeInOut(duration: 2.6).repeatForever(autoreverses: true),
+            expression == .idle
+                ? .easeInOut(duration: 3).repeatForever(autoreverses: true)
+                : .default,
             value: floatUp
         )
     }
