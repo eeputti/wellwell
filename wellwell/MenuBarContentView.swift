@@ -15,6 +15,7 @@ struct MenuBarContentView: View {
     @EnvironmentObject var purchaseManager: PurchaseManager
     @Environment(\.openWindow) private var openWindow
     @AppStorage("selectedCharacterFamily") private var selectedCharacterFamilyValue = CharacterType.cloud.storedValue
+    @AppStorage("selectedCloudColor") private var selectedCloudColorValue = CloudColor.default.storedValue
     @State private var showPaywall = false
     @State private var showProSettings = false
 
@@ -23,6 +24,7 @@ struct MenuBarContentView: View {
             CharacterView(
                 character: selectedCharacterFamily,
                 expression: currentExpression,
+                cloudColor: selectedCloudColor,
                 isLocked: false
             )
                 .frame(width: 120, height: 90)
@@ -157,6 +159,10 @@ struct MenuBarContentView: View {
         CharacterType(storedValue: selectedCharacterFamilyValue)
     }
 
+    private var selectedCloudColor: CloudColor {
+        CloudColor(storedValue: selectedCloudColorValue)
+    }
+
     private var settingsPanel: some View {
         VStack(spacing: 8) {
             sliderRow(title: "focus", suffix: "min", value: $vm.focusMinutes, range: 1...120)
@@ -166,12 +172,50 @@ struct MenuBarContentView: View {
             Text("progress: \(vm.completedSessionProgressText)")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+            cloudColorPicker
         }
         .padding(8)
         .background(
             RoundedRectangle(cornerRadius: 10)
                 .fill(Color.primary.opacity(0.05))
         )
+    }
+
+    private var cloudColorPicker: some View {
+        HStack(spacing: 8) {
+            ForEach(CloudColor.allCases, id: \.storedValue) { color in
+                Button {
+                    selectedCloudColorValue = color.storedValue
+                } label: {
+                    Circle()
+                        .fill(swatchColor(for: color))
+                        .frame(width: 14, height: 14)
+                        .overlay(
+                            Circle()
+                                .stroke(
+                                    selectedCloudColor == color ? Color.primary : Color.clear,
+                                    lineWidth: 2
+                                )
+                        )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private func swatchColor(for color: CloudColor) -> Color {
+        switch color {
+        case .default:
+            return Color.white
+        case .blue:
+            return Color(red: 0.43, green: 0.69, blue: 0.97)
+        case .green:
+            return Color(red: 0.46, green: 0.81, blue: 0.59)
+        case .pink:
+            return Color(red: 0.95, green: 0.58, blue: 0.75)
+        case .red:
+            return Color(red: 0.95, green: 0.43, blue: 0.43)
+        }
     }
 
     private func sliderRow(

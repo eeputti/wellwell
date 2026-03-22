@@ -10,6 +10,7 @@ import SwiftUI
 struct ContentView: View {
     @EnvironmentObject var vm: TimerViewModel
     @AppStorage("selectedCharacterFamily") private var selectedCharacterFamilyValue = CharacterType.cloud.storedValue
+    @AppStorage("selectedCloudColor") private var selectedCloudColorValue = CloudColor.default.storedValue
 
     var body: some View {
         ZStack {
@@ -33,6 +34,7 @@ struct ContentView: View {
                 CharacterView(
                     character: selectedCharacterFamily,
                     expression: currentExpression,
+                    cloudColor: selectedCloudColor,
                     isLocked: false
                 )
                     .frame(width: 220, height: 160)
@@ -146,6 +148,47 @@ struct ContentView: View {
         CharacterType(storedValue: selectedCharacterFamilyValue)
     }
 
+    private var selectedCloudColor: CloudColor {
+        CloudColor(storedValue: selectedCloudColorValue)
+    }
+
+    private var cloudColorPicker: some View {
+        HStack(spacing: 10) {
+            ForEach(CloudColor.allCases, id: \.storedValue) { color in
+                Button {
+                    selectedCloudColorValue = color.storedValue
+                } label: {
+                    Circle()
+                        .fill(swatchColor(for: color))
+                        .frame(width: 18, height: 18)
+                        .overlay(
+                            Circle()
+                                .stroke(
+                                    selectedCloudColor == color ? Color.black.opacity(0.75) : Color.clear,
+                                    lineWidth: 2
+                                )
+                        )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private func swatchColor(for color: CloudColor) -> Color {
+        switch color {
+        case .default:
+            return Color.white
+        case .blue:
+            return Color(red: 0.43, green: 0.69, blue: 0.97)
+        case .green:
+            return Color(red: 0.46, green: 0.81, blue: 0.59)
+        case .pink:
+            return Color(red: 0.95, green: 0.58, blue: 0.75)
+        case .red:
+            return Color(red: 0.95, green: 0.43, blue: 0.43)
+        }
+    }
+
     private var settingsPanel: some View {
         VStack(spacing: 14) {
             timerSliderRow(
@@ -172,6 +215,8 @@ struct ContentView: View {
             Text("progress: \(vm.completedSessionProgressText)")
                 .font(.subheadline)
                 .foregroundStyle(.black.opacity(0.6))
+
+            cloudColorPicker
         }
         .padding(16)
         .background(
