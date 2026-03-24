@@ -65,10 +65,25 @@ struct MenuBarContentView: View {
                     .font(.headline)
                     .foregroundStyle(.secondary)
 
-                Button(primaryActionTitle) {
-                    handlePrimaryAction()
-                }
-                .buttonStyle(.borderedProminent)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("today: \(vm.todayFocusMinutes) min")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text("streak: \(vm.currentStreakDays) day\(vm.currentStreakDays == 1 ? "" : "s")")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(8)
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Color.primary.opacity(0.05))
+            )
+
+            Button(primaryActionTitle) {
+                handlePrimaryAction()
+            }
+            .buttonStyle(.borderedProminent)
 
                 if vm.state == .idle {
                     VStack(alignment: .leading, spacing: 4) {
