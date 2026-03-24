@@ -41,6 +41,9 @@ struct ContentView: View {
 
                     if isCompact {
                         compactFocusCard(scale: uiScale)
+                        if vm.showPostSessionFlow && vm.state == .waitingForBreakConfirmation {
+                            postSessionCard(scale: uiScale)
+                        }
                     } else {
                         heroRow(scale: uiScale)
                         consistencyCard(scale: uiScale)
@@ -478,6 +481,38 @@ struct ContentView: View {
             }
             .buttonStyle(SecondaryButtonStyle())
             .disabled(!canSkipSessionInCompactMode)
+
+            Button("reset timer") {
+                vm.resetTimer()
+            }
+            .buttonStyle(SecondaryButtonStyle())
+
+        case .waitingForBreakConfirmation, .overdueBreak:
+            Button("take an earned break") {
+                vm.startBreak()
+            }
+            .buttonStyle(MainButtonStyle())
+
+            Button("continue session at your own risk") {
+                vm.startWork()
+            }
+            .buttonStyle(SecondaryButtonStyle())
+
+            Button("reset timer") {
+                vm.resetTimer()
+            }
+            .buttonStyle(SecondaryButtonStyle())
+
+        case .waitingForWorkConfirmation, .overdueWork:
+            Button("i'm back again!") {
+                vm.resumeWork()
+            }
+            .buttonStyle(MainButtonStyle())
+
+            Button("reset timer") {
+                vm.resetTimer()
+            }
+            .buttonStyle(SecondaryButtonStyle())
 
         default:
             EmptyView()
