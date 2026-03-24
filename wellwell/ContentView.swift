@@ -296,8 +296,8 @@ struct ContentView: View {
         }
 
         if vm.state == .focusRunning {
-            Button("take an earned break") {
-                vm.startBreak()
+            Button("take an early break") {
+                vm.startBreak(forceShortBreak: true)
             }
             .buttonStyle(SecondaryButtonStyle())
         }
