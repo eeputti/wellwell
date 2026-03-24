@@ -40,6 +40,8 @@ struct MenuBarContentView: View {
                 } label: {
                     Image(systemName: "ellipsis.circle")
                         .font(.title3.weight(.semibold))
+                        .padding(6)
+                        .contentShape(Rectangle())
                 }
                 .menuIndicator(.hidden)
                 .menuStyle(.borderlessButton)
@@ -155,16 +157,6 @@ struct MenuBarContentView: View {
                 openWindow(id: "main")
             }
             .keyboardShortcut("1", modifiers: [.command])
-
-            Button("open settings") {
-                openWindow(id: "settings")
-            }
-            .buttonStyle(.bordered)
-
-            Button("open stats") {
-                openWindow(id: "stats")
-            }
-            .buttonStyle(.bordered)
 
             Button("quit wellwell") {
                 NSApplication.shared.terminate(nil)

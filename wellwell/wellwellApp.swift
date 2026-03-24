@@ -57,7 +57,7 @@ struct wellwellApp: App {
             MenuBarContentView()
                 .environmentObject(vm)
         } label: {
-            Label(menuBarTitle, systemImage: menuBarSymbolName)
+            Text(menuBarTitle)
                 .monospacedDigit()
         }
         .menuBarExtraStyle(.window)
@@ -83,20 +83,6 @@ struct wellwellApp: App {
         }
     }
 
-    private var menuBarSymbolName: String {
-        switch vm.state {
-        case .idle:
-            return "cloud.sun"
-        case .focusRunning:
-            return "timer"
-        case .waitingForBreakConfirmation, .overdueBreak:
-            return "figure.walk"
-        case .breakRunning:
-            return "cup.and.saucer"
-        case .waitingForWorkConfirmation, .overdueWork:
-            return "arrow.clockwise"
-        }
-    }
 }
 
 
