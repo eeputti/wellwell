@@ -67,7 +67,13 @@ struct wellwellApp: App {
     private var menuBarTitle: String {
         switch vm.state {
         case .idle:
-            return "wellwell"
+            if vm.todayFocusMinutes == 0 {
+                return "wellwell"
+            }
+            if vm.currentStreakDays > 0 {
+                return "\(vm.todayFocusMinutes)m · \(vm.currentStreakDays)d"
+            }
+            return "\(vm.todayFocusMinutes)m"
         case .focusRunning:
             return "focus \(vm.formattedTime())"
         case .waitingForBreakConfirmation:
