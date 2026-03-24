@@ -665,7 +665,9 @@ final class TimerViewModel: ObservableObject {
     func saveReflection(
         for sessionID: UUID,
         workSummary: String,
-        focusScore: Int
+        focusScore: Int,
+        sessionType: SessionType?,
+        focusNote: String?
     ) {
         guard let index = sessionHistory.firstIndex(where: { $0.id == sessionID }) else {
             pendingReflectionSessionID = nil
@@ -674,6 +676,9 @@ final class TimerViewModel: ObservableObject {
 
         sessionHistory[index].reflectionWorkSummary = workSummary.trimmingCharacters(in: .whitespacesAndNewlines)
         sessionHistory[index].reflectionFocusScore = min(max(focusScore, 1), 5)
+        sessionHistory[index].sessionType = sessionType
+        let trimmedFocusNote = focusNote?.trimmingCharacters(in: .whitespacesAndNewlines)
+        sessionHistory[index].focusNote = trimmedFocusNote?.isEmpty == true ? nil : trimmedFocusNote
         saveSessionHistory()
         pendingReflectionSessionID = nil
     }
