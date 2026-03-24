@@ -159,7 +159,7 @@ struct ContentView: View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(greetingText)
-                    .font(.system(size: scaled(28, by: scale), weight: .semibold, design: .rounded))
+                    .font(.system(size: scaled(25, by: scale), weight: .semibold, design: .rounded))
                     .foregroundStyle(.black.opacity(0.78))
 
                 Text("what a lovely day to work!")
@@ -187,7 +187,7 @@ struct ContentView: View {
 
     private func cloudCard(scale: CGFloat) -> some View {
         VStack(spacing: scaled(14, by: scale)) {
-            SpeechBubbleView(text: bubbleText, fontSize: scaled(28, by: scale))
+            SpeechBubbleView(text: bubbleText, fontSize: scaled(20, by: scale))
 
             CharacterView(
                 character: .cloud,
@@ -786,6 +786,9 @@ struct SpeechBubbleView: View {
         Text(text)
             .font(.system(size: fontSize, weight: .medium, design: .rounded))
             .multilineTextAlignment(.center)
+            .lineLimit(2)
+            .truncationMode(.clip)
+            .fixedSize(horizontal: false, vertical: true)
             .foregroundColor(.black.opacity(0.82))
             .padding(.horizontal, 18)
             .padding(.vertical, 14)
