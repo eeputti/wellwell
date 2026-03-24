@@ -21,8 +21,8 @@ struct wellwellApp: App {
     var body: some Scene {
         WindowGroup(id: "main") {
             ContentView()
-                .frame(minWidth: 560, minHeight: 440)
-                .background(WindowConstraintsView(minSize: NSSize(width: 560, height: 440)))
+                .frame(minWidth: 500, minHeight: 380)
+                .background(WindowConstraintsView(minSize: NSSize(width: 500, height: 380)))
                 .environmentObject(vm)
                 .environmentObject(purchaseManager)
                 .task {
