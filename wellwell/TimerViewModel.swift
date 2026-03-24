@@ -7,8 +7,19 @@
 
 import Foundation
 import Combine
+import AppKit
 
 final class TimerViewModel: ObservableObject {
+    struct InAppBanner: Identifiable, Equatable {
+        let id = UUID()
+        let text: String
+    }
+
+    private enum CompletionEvent {
+        case focusEnded
+        case breakEnded
+    }
+
     struct MonthlyFocusPoint: Identifiable {
         let id: String
         let monthStart: Date
@@ -50,6 +61,7 @@ final class TimerViewModel: ObservableObject {
     @Published var streakMood: StreakMood = .happy
     @Published var streakMilestoneMessage: String?
     @Published private(set) var sessionHistory: [SessionRecord] = []
+    @Published var activeInAppBanner: InAppBanner?
     
     private var timer: Timer?
     private var overdueTimer: Timer?
@@ -236,7 +248,7 @@ final class TimerViewModel: ObservableObject {
 
             SoundManager.shared.playOneShot(name: "well_focus_done")
 
-            NotificationManager.shared.notifyFocusEnded()
+            routeCompletionEvent(.focusEnded)
             NotificationManager.shared.cancelBreakFollowUp()
             NotificationManager.shared.scheduleBreakFollowUp(after: overdueInterval)
 
@@ -263,7 +275,7 @@ final class TimerViewModel: ObservableObject {
 
             SoundManager.shared.playOneShot(name: "well_break")
 
-            NotificationManager.shared.notifyBreakEnded()
+            routeCompletionEvent(.breakEnded)
             NotificationManager.shared.cancelWorkFollowUp()
             NotificationManager.shared.scheduleWorkFollowUp(after: overdueInterval)
 
@@ -292,6 +304,39 @@ final class TimerViewModel: ObservableObject {
     private func clearOverdueState() {
         overdueTimer?.invalidate()
         overdueTimer = nil
+    }
+
+    private func routeCompletionEvent(_ event: CompletionEvent) {
+        if NSApplication.shared.isActive {
+            showInAppBanner(for: event)
+            return
+        }
+
+        switch event {
+        case .focusEnded:
+            NotificationManager.shared.notifyFocusEnded()
+        case .breakEnded:
+            NotificationManager.shared.notifyBreakEnded()
+        }
+    }
+
+    private func showInAppBanner(for event: CompletionEvent) {
+        let message: String
+        switch event {
+        case .focusEnded:
+            message = "this one counted — time for a break"
+        case .breakEnded:
+            message = "ready to get back to it?"
+        }
+
+        let banner = InAppBanner(text: message)
+        activeInAppBanner = banner
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.6) { [weak self] in
+            guard let self else { return }
+            if self.activeInAppBanner?.id == banner.id {
+                self.activeInAppBanner = nil
+            }
+        }
     }
 
     private func cancelAllFollowUps() {
