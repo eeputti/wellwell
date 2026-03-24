@@ -190,9 +190,9 @@ struct ContentView: View {
                     )
             }
 
-            VStack(alignment: .leading, spacing: scaled(6, by: scale)) {
-                Text(vm.todayLiveFocusText())
-                    .font(.system(size: scaled(12, by: scale), weight: .semibold, design: .rounded))
+            VStack(alignment: .leading, spacing: 6) {
+                Text(consistencyHeadlineText)
+                    .font(.caption.weight(.semibold))
                     .foregroundStyle(.black.opacity(0.64))
 
                 GeometryReader { proxy in
@@ -218,8 +218,16 @@ struct ContentView: View {
         )
     }
 
-    private func timerCard(scale: CGFloat) -> some View {
-        VStack(spacing: scaled(12, by: scale)) {
+    private var consistencyHeadlineText: String {
+        let targetSeconds = max(1, dailyFocusTargetMinutes) * 60
+        if vm.todayLiveFocusSeconds >= targetSeconds {
+            return "you're on fire! 🔥"
+        }
+        return vm.todayLiveFocusText()
+    }
+
+    private var timerCard: some View {
+        VStack(spacing: 12) {
             Text(vm.formattedTime())
                 .font(.system(size: scaled(80, by: scale), weight: .light, design: .rounded))
                 .monospacedDigit()

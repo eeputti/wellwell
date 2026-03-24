@@ -11,6 +11,7 @@ struct TimerSettingsView: View {
     @AppStorage("userFirstName") private var userFirstName = ""
     @AppStorage("weeklySummaryConsent") private var weeklySummaryConsent = false
     @AppStorage("preferredLanguage") private var preferredLanguage = AppLanguage.english.rawValue
+    @AppStorage(TimerViewModel.dailyFocusTargetMinutesKey) private var dailyFocusTargetMinutes = 120
 
     @State private var showPaywall = false
     @Environment(\.dismiss) private var dismiss
@@ -68,6 +69,7 @@ struct TimerSettingsView: View {
                 sliderRow(title: "short break", suffix: "min", value: $vm.breakMinutes, range: 1...60)
                 sliderRow(title: "sessions before long break", suffix: "", value: $vm.sessionsUntilLongBreak, range: 1...12)
                 sliderRow(title: "long break", suffix: "min", value: $vm.longBreakMinutes, range: 1...90)
+                sliderRow(title: "daily focus progress goal", suffix: "min", value: $dailyFocusTargetMinutes, range: 15...480)
                 Toggle("auto-start next session", isOn: $autoStartNextSession)
             }
         }
