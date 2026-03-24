@@ -201,19 +201,3 @@ struct TimerSettingsView: View {
     }
 
 }
-
-private enum AppLanguage: String, CaseIterable, Identifiable {
-    case english = "en"
-    case finnish = "fi"
-
-    var id: String { rawValue }
-
-    var label: String {
-        switch self {
-        case .english:
-            return "English"
-        case .finnish:
-            return "Suomi"
-        }
-    }
-}
