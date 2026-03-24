@@ -95,5 +95,6 @@ struct CharacterView: View {
                 : .default,
             value: isFloatingPhaseA
         )
+        .animation(nil, value: renderableImageName)
     }
 }
