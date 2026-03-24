@@ -159,7 +159,7 @@ final class TimerViewModel: ObservableObject {
         startTimer()
     }
 
-    func startBreak() {
+    func startBreak(forceShortBreak: Bool = false) {
         stopAllSounds()
         clearOverdueState()
         cancelAllFollowUps()
@@ -168,7 +168,8 @@ final class TimerViewModel: ObservableObject {
         isPaused = false
 
         state = .breakRunning
-        timeRemaining = isUpcomingBreakLong ? longBreakDuration : breakDuration
+        let shouldUseLongBreak = isUpcomingBreakLong && !forceShortBreak
+        timeRemaining = shouldUseLongBreak ? longBreakDuration : breakDuration
 
         startTimer()
     }
