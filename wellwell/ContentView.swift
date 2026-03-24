@@ -42,9 +42,8 @@ struct ContentView: View {
                     if isCompact {
                         compactFocusCard(scale: uiScale)
                     } else {
-                        cloudCard(scale: uiScale)
+                        heroRow(scale: uiScale)
                         consistencyCard(scale: uiScale)
-                        timerCard(scale: uiScale)
                         if vm.showPostSessionFlow && vm.state == .waitingForBreakConfirmation {
                             postSessionCard(scale: uiScale)
                         }
@@ -185,19 +184,31 @@ struct ContentView: View {
         }
     }
 
-    private func cloudCard(scale: CGFloat) -> some View {
-        VStack(spacing: scaled(14, by: scale)) {
-            SpeechBubbleView(text: bubbleText, fontSize: scaled(20, by: scale))
+    private func heroRow(scale: CGFloat) -> some View {
+        HStack(alignment: .center, spacing: scaled(30, by: scale)) {
+            VStack(spacing: scaled(10, by: scale)) {
+                SpeechBubbleView(
+                    text: bubbleText,
+                    fontSize: scaled(16, by: scale),
+                    showTail: false
+                )
+                .frame(maxWidth: scaled(280, by: scale))
 
-            CharacterView(
-                character: .cloud,
-                expression: currentExpression,
-                cloudColor: selectedCloudColor,
-                isLocked: false
-            )
-            .frame(width: scaled(260, by: scale), height: scaled(180, by: scale))
+                CharacterView(
+                    character: .cloud,
+                    expression: currentExpression,
+                    cloudColor: selectedCloudColor,
+                    isLocked: false
+                )
+                .frame(width: scaled(220, by: scale), height: scaled(150, by: scale))
+            }
+            .frame(maxWidth: scaled(300, by: scale), alignment: .top)
+
+            timerCard(scale: scale)
+                .frame(maxWidth: .infinity)
         }
-        .padding(.vertical, scaled(18, by: scale))
+        .padding(.horizontal, scaled(18, by: scale))
+        .padding(.vertical, scaled(20, by: scale))
         .frame(maxWidth: .infinity)
         .background(
             RoundedRectangle(cornerRadius: scaled(26, by: scale))
@@ -330,12 +341,9 @@ struct ContentView: View {
                 completionCard
             }
         }
-        .padding(scaled(22, by: scale))
-        .frame(maxWidth: .infinity)
-        .background(
-            RoundedRectangle(cornerRadius: scaled(24, by: scale))
-                .fill(Color.white.opacity(0.82))
-        )
+        .padding(.vertical, scaled(8, by: scale))
+        .padding(.horizontal, scaled(6, by: scale))
+        .frame(maxWidth: .infinity, alignment: .center)
     }
 
     private func compactFocusCard(scale: CGFloat) -> some View {
