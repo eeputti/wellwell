@@ -27,10 +27,10 @@ struct TimerSettingsView: View {
                     VStack(alignment: .leading, spacing: 6) {
                         Text("your settings")
                             .font(.title2.weight(.semibold))
-                            .foregroundStyle(.black.opacity(0.75))
+                            .foregroundStyle(.primary)
                         Text("shape your focus experience")
                             .font(.title3.weight(.medium))
-                            .foregroundStyle(.black.opacity(0.55))
+                            .foregroundStyle(.secondary)
                     }
 
                     timerSection
@@ -49,7 +49,7 @@ struct TimerSettingsView: View {
             } label: {
                 Image(systemName: "xmark")
                     .font(.system(size: 34, weight: .light))
-                    .foregroundStyle(.black)
+                    .foregroundStyle(.primary)
                     .frame(width: 44, height: 44)
             }
             .buttonStyle(.plain)
@@ -75,7 +75,7 @@ struct TimerSettingsView: View {
                 sliderRow(title: "long break", suffix: "min", value: $vm.longBreakMinutes, range: 1...90)
                 VStack(alignment: .leading, spacing: 6) {
                     Text("daily focus progress goal")
-                        .foregroundStyle(.black.opacity(0.72))
+                        .foregroundStyle(.primary)
                     Picker("daily focus progress goal", selection: $dailyFocusTargetMinutes) {
                         ForEach(allowedDailyGoalOptions, id: \.self) { option in
                             Text("\(option) min").tag(option)
@@ -169,19 +169,23 @@ struct TimerSettingsView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.headline)
-                    .foregroundStyle(.black.opacity(0.72))
+                    .foregroundStyle(.primary)
                 Text(subtitle)
                     .font(.subheadline)
-                    .foregroundStyle(.black.opacity(0.55))
+                    .foregroundStyle(.secondary)
             }
 
             content()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(14)
+        .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white.opacity(0.84))
+                .fill(Color.white.opacity(0.94))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.primary.opacity(0.08), lineWidth: 1)
         )
     }
 
@@ -194,10 +198,10 @@ struct TimerSettingsView: View {
         VStack(alignment: .leading, spacing: 2) {
             HStack {
                 Text(title)
-                    .foregroundStyle(.black.opacity(0.72))
+                    .foregroundStyle(.primary)
                 Spacer()
                 Text(suffix.isEmpty ? "\(value.wrappedValue)" : "\(value.wrappedValue) \(suffix)")
-                    .foregroundStyle(.black.opacity(0.56))
+                    .foregroundStyle(.secondary)
             }
             Slider(
                 value: Binding(
@@ -213,7 +217,7 @@ struct TimerSettingsView: View {
     private func textRow<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
         HStack(alignment: .center) {
             Text(title)
-                .foregroundStyle(.black.opacity(0.72))
+                .foregroundStyle(.primary)
                 .frame(width: 90, alignment: .leading)
             content()
             Spacer()
