@@ -11,6 +11,7 @@ import StoreKit
 struct wellwellApp: App {
     @StateObject private var vm = TimerViewModel()
     @StateObject private var purchaseManager = PurchaseManager()
+    @State private var menuBarExtraVisible = true
 
     init() {
         NotificationManager.shared.requestPermission()
@@ -39,12 +40,22 @@ struct wellwellApp: App {
             }
         }
 
-        MenuBarExtra {
-            MenuBarContentView()
+        Window("settings", id: "settings") {
+            TimerSettingsView()
                 .environmentObject(vm)
                 .environmentObject(purchaseManager)
+        }
+
+        Window("stats", id: "stats") {
+            StatsView()
+                .environmentObject(vm)
+        }
+
+        MenuBarExtra(isInserted: $menuBarExtraVisible) {
+            MenuBarContentView()
+                .environmentObject(vm)
         } label: {
-            Text(menuBarTitle)
+            Label(menuBarTitle, systemImage: menuBarSymbolName)
                 .monospacedDigit()
         }
         .menuBarExtraStyle(.window)
