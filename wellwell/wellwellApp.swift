@@ -59,17 +59,17 @@ struct wellwellApp: App {
         case .idle:
             return "wellwell"
         case .focusRunning:
-            return "focus \(vm.formattedTime())"
+            return L10n.tr("menu_focus_time", vm.formattedTime())
         case .waitingForBreakConfirmation:
-            return "break?"
+            return L10n.tr("menu_break_question")
         case .breakRunning:
-            return "break \(vm.formattedTime())"
+            return L10n.tr("menu_break_time", vm.formattedTime())
         case .waitingForWorkConfirmation:
-            return "work?"
+            return L10n.tr("menu_work_question")
         case .overdueBreak:
-            return "break!"
+            return L10n.tr("menu_break_alert")
         case .overdueWork:
-            return "work!"
+            return L10n.tr("menu_work_alert")
         }
     }
 

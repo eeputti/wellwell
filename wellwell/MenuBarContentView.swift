@@ -260,11 +260,11 @@ struct MenuBarContentView: View {
 
     private var settingsPanel: some View {
         VStack(spacing: 8) {
-            sliderRow(title: "focus", suffix: "min", value: $vm.focusMinutes, range: 1...120)
-            sliderRow(title: "break", suffix: "min", value: $vm.breakMinutes, range: 1...60)
-            sliderRow(title: "sessions", suffix: "", value: $vm.sessionsUntilLongBreak, range: 1...12)
-            sliderRow(title: "long break", suffix: "min", value: $vm.longBreakMinutes, range: 1...90)
-            Text("progress: \(vm.completedSessionProgressText)")
+            sliderRow(title: L10n.tr("focus_short"), suffix: L10n.tr("min"), value: $vm.focusMinutes, range: 1...120)
+            sliderRow(title: L10n.tr("break_short"), suffix: L10n.tr("min"), value: $vm.breakMinutes, range: 1...60)
+            sliderRow(title: L10n.tr("sessions_short"), suffix: "", value: $vm.sessionsUntilLongBreak, range: 1...12)
+            sliderRow(title: L10n.tr("long_break"), suffix: L10n.tr("min"), value: $vm.longBreakMinutes, range: 1...90)
+            Text(L10n.tr("progress", vm.completedSessionProgressText))
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -328,13 +328,13 @@ struct MenuBarContentView: View {
     private var primaryActionTitle: String {
         switch vm.state {
         case .idle:
-            return "start"
+            return L10n.tr("start")
         case .focusRunning, .breakRunning:
-            return vm.isPaused ? "go!" : "pause"
+            return vm.isPaused ? L10n.tr("go") : L10n.tr("pause")
         case .waitingForBreakConfirmation, .overdueBreak:
-            return "start"
+            return L10n.tr("start")
         case .waitingForWorkConfirmation, .overdueWork:
-            return "go!"
+            return L10n.tr("go")
         }
     }
 
@@ -371,36 +371,36 @@ struct ProSessionSettingsView: View {
                         .font(.caption.weight(.semibold))
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("close pro settings")
+                .accessibilityLabel(L10n.tr("close_pro_settings"))
             }
 
-            Text("Wellwell Pro")
+            Text(L10n.tr("pro_title"))
                 .font(.title2.weight(.semibold))
-            Text("Customize your session lengths to match your flow.")
+            Text(L10n.tr("pro_customize"))
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
 
             HStack {
-                Text("focus")
+                Text(L10n.tr("focus_short"))
                 Spacer()
                 TextField("25", value: $vm.focusMinutes, format: .number)
                     .frame(width: 60)
                     .textFieldStyle(.roundedBorder)
-                Text("min")
+                Text(L10n.tr("min"))
                     .foregroundStyle(.secondary)
             }
 
             HStack {
-                Text("break")
+                Text(L10n.tr("break_short"))
                 Spacer()
                 TextField("5", value: $vm.breakMinutes, format: .number)
                     .frame(width: 60)
                     .textFieldStyle(.roundedBorder)
-                Text("min")
+                Text(L10n.tr("min"))
                     .foregroundStyle(.secondary)
             }
 
-            Button("done") {
+            Button(L10n.tr("done")) {
                 dismiss()
             }
             .buttonStyle(.borderedProminent)
@@ -426,7 +426,7 @@ struct ProPaywallView: View {
                         .font(.caption.weight(.semibold))
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("close paywall")
+                .accessibilityLabel(L10n.tr("close_paywall"))
             }
 
             Image("well_idle")
@@ -434,10 +434,10 @@ struct ProPaywallView: View {
                 .scaledToFit()
                 .frame(width: 110, height: 80)
 
-            Text("unlock wellwell pro ☁️")
+            Text(L10n.tr("unlock_pro"))
                 .font(.title2.weight(.semibold))
 
-            Text("Your cloud buddy wants to help you focus your way. Unlock Pro for custom session lengths forever.")
+            Text(L10n.tr("pro_pitch"))
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
 
@@ -458,14 +458,14 @@ struct ProPaywallView: View {
                     ProgressView()
                         .frame(maxWidth: .infinity)
                 } else {
-                    Text("adopt cloud pro")
+                    Text(L10n.tr("adopt_cloud_pro"))
                         .frame(maxWidth: .infinity)
                 }
             }
             .buttonStyle(.borderedProminent)
             .disabled(purchaseManager.isPurchasing)
 
-            Button("restore purchase") {
+            Button(L10n.tr("restore_purchase")) {
                 Task {
                     await purchaseManager.restorePurchases()
                     if purchaseManager.isPro {
