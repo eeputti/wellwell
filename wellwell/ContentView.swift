@@ -540,7 +540,7 @@ struct ContentView: View {
         let baseSize = compact ? CGSize(width: 560, height: 440) : CGSize(width: 900, height: 720)
         let widthScale = size.width / baseSize.width
         let heightScale = size.height / baseSize.height
-        return min(max(min(widthScale, heightScale), 0.92), 1.35)
+        return min(max(min(widthScale, heightScale), 1.0), 1.35)
     }
 
     private func scaled(_ value: CGFloat, by scale: CGFloat) -> CGFloat {
