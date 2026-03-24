@@ -6,6 +6,7 @@
 //
 import SwiftUI
 import StoreKit
+import AppKit
 
 @main
 struct wellwellApp: App {
@@ -19,6 +20,7 @@ struct wellwellApp: App {
     var body: some Scene {
         WindowGroup(id: "main") {
             ContentView()
+                .background(WindowConstraintsView(minSize: NSSize(width: 900, height: 720)))
                 .environmentObject(vm)
                 .environmentObject(purchaseManager)
                 .task {
@@ -82,6 +84,25 @@ struct wellwellApp: App {
             return "cup.and.saucer"
         case .waitingForWorkConfirmation, .overdueWork:
             return "arrow.clockwise"
+        }
+    }
+}
+
+
+private struct WindowConstraintsView: NSViewRepresentable {
+    let minSize: NSSize
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView(frame: .zero)
+        DispatchQueue.main.async {
+            view.window?.minSize = minSize
+        }
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        DispatchQueue.main.async {
+            nsView.window?.minSize = minSize
         }
     }
 }
