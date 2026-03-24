@@ -22,7 +22,7 @@ struct ContentView: View {
                 Color(red: 0.96, green: 0.95, blue: 0.92)
                     .ignoresSafeArea()
 
-                VStack(spacing: scaled(isCompact ? 14 : 22, by: uiScale)) {
+                VStack(spacing: scaled(isCompact ? 10 : 22, by: uiScale)) {
                     if isCompact {
                         compactTopRow(scale: uiScale)
                     } else {
@@ -52,7 +52,7 @@ struct ContentView: View {
                     Spacer(minLength: 0)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(scaled(isCompact ? 16 : 30, by: uiScale))
+                .padding(scaled(isCompact ? 12 : 30, by: uiScale))
 
                 if showStartRitualOverlay {
                     StartRitualOverlay()
@@ -99,20 +99,22 @@ struct ContentView: View {
     }
 
     private func compactTopRow(scale: CGFloat) -> some View {
-        HStack(alignment: .top, spacing: 10) {
+        HStack(alignment: .top, spacing: scaled(10, by: scale)) {
             CharacterView(
                 character: .cloud,
                 expression: currentExpression,
                 cloudColor: selectedCloudColor,
                 isLocked: false
             )
-            .frame(width: scaled(72, by: scale), height: scaled(52, by: scale))
+            .frame(width: scaled(94, by: scale), height: scaled(64, by: scale))
 
             Spacer(minLength: scaled(8, by: scale))
 
             SpeechBubbleView(text: bubbleText, fontSize: scaled(14, by: scale), showTail: false)
                 .frame(maxWidth: scaled(190, by: scale), alignment: .trailing)
+                .fixedSize(horizontal: false, vertical: true)
         }
+        .padding(.horizontal, scaled(6, by: scale))
         .frame(maxWidth: .infinity, alignment: .topLeading)
     }
 
@@ -254,22 +256,26 @@ struct ContentView: View {
     }
 
     private func compactTimerCard(scale: CGFloat) -> some View {
-        VStack(spacing: scaled(12, by: scale)) {
+        VStack(spacing: scaled(18, by: scale)) {
             Text(vm.formattedTime())
-                .font(.system(size: scaled(70, by: scale), weight: .light, design: .rounded))
+                .font(.system(size: scaled(88, by: scale), weight: .light, design: .rounded))
                 .monospacedDigit()
                 .foregroundStyle(.black.opacity(0.84))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
 
             Text(statusText)
-                .font(.system(size: scaled(24, by: scale), weight: .semibold, design: .rounded))
+                .font(.system(size: scaled(16, by: scale), weight: .semibold, design: .rounded))
                 .foregroundStyle(.black.opacity(0.6))
                 .multilineTextAlignment(.center)
                 .minimumScaleFactor(0.75)
 
             timerActionButtons
         }
+        .frame(maxWidth: scaled(360, by: scale))
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.vertical, scaled(8, by: scale))
+        .padding(.top, scaled(10, by: scale))
+        .padding(.bottom, scaled(6, by: scale))
     }
 
     private func postSessionCard(scale: CGFloat) -> some View {
@@ -673,14 +679,18 @@ struct BubbleTail: Shape {
 }
 
 struct MainButtonStyle: ButtonStyle {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
     func makeBody(configuration: Configuration) -> some View {
+        let isCompact = horizontalSizeClass == .compact
         configuration.label
             .font(.headline)
             .foregroundColor(.black)
-            .padding(.horizontal, 22)
+            .frame(minWidth: isCompact ? 170 : 0)
+            .padding(.horizontal, isCompact ? 18 : 22)
             .padding(.vertical, 12)
             .background(
-                RoundedRectangle(cornerRadius: 16)
+                RoundedRectangle(cornerRadius: isCompact ? 18 : 16)
                     .fill(Color(red: 0.94, green: 0.79, blue: 0.39))
             )
             .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
@@ -688,14 +698,18 @@ struct MainButtonStyle: ButtonStyle {
 }
 
 struct SecondaryButtonStyle: ButtonStyle {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
     func makeBody(configuration: Configuration) -> some View {
+        let isCompact = horizontalSizeClass == .compact
         configuration.label
             .font(.headline)
             .foregroundStyle(.black.opacity(0.8))
-            .padding(.horizontal, 18)
-            .padding(.vertical, 10)
+            .frame(minWidth: isCompact ? 170 : 0)
+            .padding(.horizontal, isCompact ? 20 : 18)
+            .padding(.vertical, isCompact ? 11 : 10)
             .background(
-                RoundedRectangle(cornerRadius: 14)
+                RoundedRectangle(cornerRadius: isCompact ? 18 : 14)
                     .fill(Color.white.opacity(0.82))
             )
             .scaleEffect(configuration.isPressed ? 0.98 : 1)
