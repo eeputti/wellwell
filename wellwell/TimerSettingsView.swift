@@ -15,6 +15,7 @@ struct TimerSettingsView: View {
 
     @State private var showPaywall = false
     @Environment(\.dismiss) private var dismiss
+    private let allowedDailyGoalOptions = [60, 120, 180]
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
@@ -60,6 +61,9 @@ struct TimerSettingsView: View {
             ProPaywallView()
                 .environmentObject(purchaseManager)
         }
+        .onAppear {
+            normalizeDailyFocusGoalIfNeeded()
+        }
     }
 
     private var timerSection: some View {
@@ -69,9 +73,25 @@ struct TimerSettingsView: View {
                 sliderRow(title: "short break", suffix: "min", value: $vm.breakMinutes, range: 1...60)
                 sliderRow(title: "sessions before long break", suffix: "", value: $vm.sessionsUntilLongBreak, range: 1...12)
                 sliderRow(title: "long break", suffix: "min", value: $vm.longBreakMinutes, range: 1...90)
-                sliderRow(title: "daily focus progress goal", suffix: "min", value: $dailyFocusTargetMinutes, range: 15...480)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("daily focus progress goal")
+                        .foregroundStyle(.black.opacity(0.72))
+                    Picker("daily focus progress goal", selection: $dailyFocusTargetMinutes) {
+                        ForEach(allowedDailyGoalOptions, id: \.self) { option in
+                            Text("\(option) min").tag(option)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                }
                 Toggle("auto-start next session", isOn: $autoStartNextSession)
             }
+        }
+    }
+
+    private func normalizeDailyFocusGoalIfNeeded() {
+        guard allowedDailyGoalOptions.contains(dailyFocusTargetMinutes) else {
+            dailyFocusTargetMinutes = 120
+            return
         }
     }
 
