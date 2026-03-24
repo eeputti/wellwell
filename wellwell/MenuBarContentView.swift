@@ -42,9 +42,11 @@ struct MenuBarContentView: View {
                         Image(systemName: "ellipsis.circle")
                             .font(.title3.weight(.semibold))
                     }
-                    .menuIndicator(.hidden)
-                    .menuStyle(.borderlessButton)
-                    .fixedSize()
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                        .font(.title3.weight(.semibold))
+                        .padding(6)
+                        .contentShape(Rectangle())
                 }
 
                 CharacterView(
@@ -160,15 +162,17 @@ struct MenuBarContentView: View {
                     openWindow(id: "settings")
                 }
                 .buttonStyle(.bordered)
+            }
 
-                Button("open stats") {
-                    openWindow(id: "stats")
-                }
-                .buttonStyle(.bordered)
+            Divider()
 
-                Button("quit wellwell") {
-                    NSApplication.shared.terminate(nil)
-                }
+            Button("open main window") {
+                openWindow(id: "main")
+            }
+            .keyboardShortcut("1", modifiers: [.command])
+
+            Button("quit wellwell") {
+                NSApplication.shared.terminate(nil)
             }
             .padding(16)
         }
