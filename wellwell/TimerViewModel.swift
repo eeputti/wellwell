@@ -81,7 +81,7 @@ final class TimerViewModel: ObservableObject {
     }
 
     var upcomingBreakLabel: String {
-        isUpcomingBreakLong ? "long break" : "short break"
+        isUpcomingBreakLong ? L10n.tr("long_break") : L10n.tr("short_break")
     }
 
     var completedSessionProgressText: String {
@@ -378,12 +378,12 @@ final class TimerViewModel: ObservableObject {
     func todayLiveFocusText() -> String {
         let totalMinutes = todayLiveFocusSeconds / 60
         if totalMinutes < 60 {
-            return "\(totalMinutes) min today"
+            return L10n.tr("today_minutes", totalMinutes)
         }
         
         let hours = totalMinutes / 60
         let minutes = totalMinutes % 60
-        return "\(hours) h \(String(format: "%02d", minutes)) min today"
+        return L10n.tr("today_hours_minutes", hours, minutes)
     }
     
     func todayFocusProgress(targetMinutes: Int) -> Double {
@@ -638,13 +638,13 @@ final class TimerViewModel: ObservableObject {
     private func milestoneMessage(for streakDays: Int) -> String? {
         switch streakDays {
         case 3:
-            return "nice consistency"
+            return L10n.tr("milestone_consistency")
         case 7:
-            return "strong focus streak"
+            return L10n.tr("milestone_focus_streak")
         case 14:
-            return "you’re locked in"
+            return L10n.tr("milestone_locked_in")
         case 30:
-            return "elite discipline"
+            return L10n.tr("milestone_elite")
         default:
             return nil
         }
