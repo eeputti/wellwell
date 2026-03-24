@@ -19,7 +19,7 @@ struct MenuBarContentView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 14) {
+            VStack(spacing: 18) {
                 HStack {
                     Spacer()
                     Menu {
@@ -41,13 +41,14 @@ struct MenuBarContentView: View {
                     } label: {
                         Image(systemName: "ellipsis.circle")
                             .font(.title3.weight(.semibold))
-                            .padding(6)
+                            .padding(8)
                             .contentShape(Rectangle())
                     }
                     .menuIndicator(.hidden)
                     .menuStyle(.borderlessButton)
                     .fixedSize()
                 }
+                .padding(.top, 4)
 
                 CharacterView(
                     character: selectedCharacterFamily,
@@ -178,6 +179,9 @@ struct MenuBarContentView: View {
                 }
                 .buttonStyle(.bordered)
             }
+            .padding(.top, 14)
+            .padding(.horizontal, 20)
+            .padding(.bottom, 18)
 
             Divider()
 
@@ -189,7 +193,9 @@ struct MenuBarContentView: View {
             Button("quit wellwell") {
                 NSApplication.shared.terminate(nil)
             }
-            .padding(16)
+            .padding(.horizontal, 20)
+            .padding(.top, 10)
+            .padding(.bottom, 16)
         }
         .scrollIndicators(.never)
         .frame(minWidth: 320, idealWidth: 340, maxWidth: 420, minHeight: 640, alignment: .top)
