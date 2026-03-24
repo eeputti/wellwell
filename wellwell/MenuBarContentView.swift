@@ -149,7 +149,7 @@ struct MenuBarContentView: View {
             }
 
             if vm.state == .waitingForWorkConfirmation || vm.state == .overdueWork {
-                Button("sorry i'm late but good to go again!") {
+                Button("i'm back again!") {
                     vm.resumeWork()
                 }
                 .buttonStyle(.borderedProminent)
