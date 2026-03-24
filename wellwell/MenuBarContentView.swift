@@ -50,6 +50,11 @@ struct MenuBarContentView: View {
                 }
                 .padding(.top, 4)
 
+                if let banner = vm.activeInAppBanner {
+                    inAppCompletionBanner(text: banner.text)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                }
+
                 CharacterView(
                     character: selectedCharacterFamily,
                     expression: currentExpression,
@@ -188,6 +193,7 @@ struct MenuBarContentView: View {
         }
         .scrollIndicators(.never)
         .frame(minWidth: 320, idealWidth: 340, maxWidth: 420, minHeight: 640, alignment: .top)
+        .animation(.easeInOut(duration: 0.2), value: vm.activeInAppBanner)
     }
 
     private var statusText: String {
@@ -270,6 +276,24 @@ struct MenuBarContentView: View {
             RoundedRectangle(cornerRadius: 10)
                 .fill(Color.primary.opacity(0.05))
         )
+    }
+
+    private func inAppCompletionBanner(text: String) -> some View {
+        Text(text)
+            .font(.system(size: 13, weight: .medium, design: .rounded))
+            .foregroundStyle(.black.opacity(0.72))
+            .multilineTextAlignment(.center)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background(
+                Capsule()
+                    .fill(Color.white.opacity(0.94))
+            )
+            .overlay(
+                Capsule()
+                    .stroke(Color.black.opacity(0.08), lineWidth: 1)
+            )
+            .shadow(color: .black.opacity(0.06), radius: 8, x: 0, y: 3)
     }
 
     private func sliderRow(
