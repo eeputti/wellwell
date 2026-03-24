@@ -25,10 +25,10 @@ struct TimerSettingsView: View {
                 }
                 .padding(20)
             }
-            .navigationTitle(L10n.tr("settings"))
+            .navigationTitle("settings")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(L10n.tr("done")) {
+                    Button("done") {
                         dismiss()
                     }
                 }
@@ -42,43 +42,43 @@ struct TimerSettingsView: View {
     }
 
     private var timerSection: some View {
-        sectionCard(title: L10n.tr("timer"), subtitle: L10n.tr("adjust_flow")) {
+        sectionCard(title: "timer", subtitle: "adjust your flow first") {
             VStack(spacing: 12) {
-                sliderRow(title: L10n.tr("focus_duration"), suffix: L10n.tr("min"), value: $vm.focusMinutes, range: 1...120)
-                sliderRow(title: L10n.tr("short_break"), suffix: L10n.tr("min"), value: $vm.breakMinutes, range: 1...60)
-                sliderRow(title: L10n.tr("sessions_before_long_break"), suffix: "", value: $vm.sessionsUntilLongBreak, range: 1...12)
-                sliderRow(title: L10n.tr("long_break"), suffix: L10n.tr("min"), value: $vm.longBreakMinutes, range: 1...90)
-                Toggle(L10n.tr("auto_start_next_session"), isOn: $autoStartNextSession)
+                sliderRow(title: "focus duration", suffix: "min", value: $vm.focusMinutes, range: 1...120)
+                sliderRow(title: "short break", suffix: "min", value: $vm.breakMinutes, range: 1...60)
+                sliderRow(title: "sessions before long break", suffix: "", value: $vm.sessionsUntilLongBreak, range: 1...12)
+                sliderRow(title: "long break", suffix: "min", value: $vm.longBreakMinutes, range: 1...90)
+                Toggle("auto-start next session", isOn: $autoStartNextSession)
             }
         }
     }
 
     private var accountSection: some View {
-        sectionCard(title: L10n.tr("account_profile"), subtitle: L10n.tr("name_email_plan")) {
+        sectionCard(title: "account profile", subtitle: "name, email and plan") {
             VStack(spacing: 12) {
-                textRow(title: L10n.tr("your_name")) {
-                    TextField(L10n.tr("your_name"), text: $userFirstName)
+                textRow(title: "your name") {
+                    TextField("your name", text: $userFirstName)
                         .textFieldStyle(.roundedBorder)
                         .frame(maxWidth: 260)
                 }
 
-                textRow(title: L10n.tr("email")) {
-                    TextField(L10n.tr("email"), text: $userEmail)
+                textRow(title: "email") {
+                    TextField("email", text: $userEmail)
                         .textFieldStyle(.roundedBorder)
                         .frame(maxWidth: 260)
                 }
 
                 if !userEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    Toggle(L10n.tr("weekly_summary_email"), isOn: $weeklySummaryConsent)
+                    Toggle("weekly summary email", isOn: $weeklySummaryConsent)
                 }
 
                 Divider()
 
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(purchaseManager.isPro ? L10n.tr("wellwell_pro_active") : L10n.tr("free_plan"))
+                        Text(purchaseManager.isPro ? "wellwell pro active" : "free plan")
                             .font(.subheadline.weight(.semibold))
-                        Text(purchaseManager.isPro ? L10n.tr("thanks_supporting") : L10n.tr("upgrade_more_personalization"))
+                        Text(purchaseManager.isPro ? "thanks for supporting wellwell" : "upgrade for more personalization")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -86,7 +86,7 @@ struct TimerSettingsView: View {
                     Spacer()
 
                     if !purchaseManager.isPro {
-                        Button(L10n.tr("upgrade_to_pro")) {
+                        Button("upgrade to pro") {
                             showPaywall = true
                         }
                         .buttonStyle(.borderedProminent)
@@ -97,20 +97,20 @@ struct TimerSettingsView: View {
     }
 
     private var appSection: some View {
-        sectionCard(title: L10n.tr("app_settings"), subtitle: L10n.tr("language_sounds_look")) {
+        sectionCard(title: "app settings", subtitle: "language, sounds and look") {
             VStack(spacing: 12) {
-                Picker(L10n.tr("language"), selection: $preferredLanguage) {
+                Picker("language", selection: $preferredLanguage) {
                     ForEach(AppLanguage.allCases) { language in
                         Text(language.label).tag(language.rawValue)
                     }
                 }
                 .pickerStyle(.segmented)
 
-                Toggle(L10n.tr("sound"), isOn: $soundEnabled)
-                Toggle(L10n.tr("notifications"), isOn: $notificationsEnabled)
+                Toggle("sound", isOn: $soundEnabled)
+                Toggle("notifications", isOn: $notificationsEnabled)
 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(L10n.tr("cloud_color"))
+                    Text("cloud color")
                         .font(.subheadline.weight(.medium))
                     CharacterColorPickerView(selectedCloudColorValue: $selectedCloudColorValue)
                 }
@@ -172,6 +172,23 @@ struct TimerSettingsView: View {
                 .frame(width: 90, alignment: .leading)
             content()
             Spacer()
+        }
+    }
+
+}
+
+private enum AppLanguage: String, CaseIterable, Identifiable {
+    case english = "en"
+    case finnish = "fi"
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .english:
+            return "English"
+        case .finnish:
+            return "Suomi"
         }
     }
 }

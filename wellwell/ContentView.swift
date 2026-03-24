@@ -122,7 +122,7 @@ struct ContentView: View {
                     .font(.title2.weight(.semibold))
                     .foregroundStyle(.black.opacity(0.78))
 
-                Text(L10n.tr("header_lovely_day"))
+                Text("what a lovely day to work!")
                     .font(.subheadline)
                     .foregroundStyle(.black.opacity(0.55))
             }
@@ -130,13 +130,13 @@ struct ContentView: View {
             Spacer()
 
             HStack(spacing: 10) {
-                Button(L10n.tr("stats")) {
+                Button("stats") {
                     showStats = true
                 }
                 .buttonStyle(SecondaryButtonStyle())
                 .keyboardShortcut("2", modifiers: [.command])
 
-                Button(L10n.tr("settings")) {
+                Button("settings") {
                     showSettings = true
                 }
                 .buttonStyle(SecondaryButtonStyle())
@@ -169,7 +169,7 @@ struct ContentView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 10) {
                 Label {
-                    Text(L10n.tr("streak_days", vm.streakDays))
+                    Text("\(vm.streakDays)-day streak")
                         .font(.subheadline.weight(.semibold))
                 } icon: {
                     Image(systemName: vm.streakDays >= 3 ? "flame.fill" : "flame")
@@ -178,7 +178,7 @@ struct ContentView: View {
 
                 Spacer()
 
-                Text(L10n.tr("today_count", vm.todaySessionCount))
+                Text("\(vm.todaySessionCount) today")
                     .font(.caption.weight(.medium))
                     .foregroundStyle(.black.opacity(0.58))
                     .padding(.horizontal, 10)
@@ -262,15 +262,15 @@ struct ContentView: View {
 
     private var postSessionCard: some View {
         VStack(spacing: 10) {
-            Text(L10n.tr("nice_work"))
+            Text("nice work ✨")
                 .font(.headline)
                 .foregroundStyle(.black.opacity(0.75))
 
-            Text(L10n.tr("today_sessions_minutes", vm.todaySessionCount, vm.todayFocusMinutes))
+            Text("today: \(vm.todaySessionCount) sessions • \(vm.todayFocusMinutes) min focus")
                 .font(.subheadline)
                 .foregroundStyle(.black.opacity(0.55))
 
-            Text(L10n.tr("take_earned_break"))
+            Text("take an earned break")
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(.black.opacity(0.7))
         }
@@ -285,7 +285,7 @@ struct ContentView: View {
     @ViewBuilder
     private var timerActionButtons: some View {
         if vm.state == .focusRunning || vm.state == .breakRunning {
-            Button(vm.isPaused ? L10n.tr("go") : L10n.tr("pause")) {
+            Button(vm.isPaused ? "go!" : "pause") {
                 if vm.isPaused {
                     vm.continuePausedSession()
                 } else {
@@ -296,14 +296,14 @@ struct ContentView: View {
         }
 
         if vm.state == .focusRunning {
-            Button(L10n.tr("take_earned_break")) {
+            Button("take an earned break") {
                 vm.startBreak()
             }
             .buttonStyle(SecondaryButtonStyle())
         }
 
         if vm.state == .idle {
-            Button(L10n.tr("lets_begin")) {
+            Button("let’s begin") {
                 startSessionWithRitual()
             }
             .buttonStyle(MainButtonStyle())
@@ -312,33 +312,33 @@ struct ContentView: View {
         }
 
         if vm.state == .waitingForBreakConfirmation || vm.state == .overdueBreak {
-            Button(L10n.tr("take_earned_break")) {
+            Button("take an earned break") {
                 vm.startBreak()
             }
             .buttonStyle(MainButtonStyle())
 
-            Button(L10n.tr("continue_session_risk")) {
+            Button("continue session at your own risk") {
                 vm.startWork()
             }
             .buttonStyle(SecondaryButtonStyle())
         }
 
         if vm.state == .waitingForWorkConfirmation || vm.state == .overdueWork {
-            Button(L10n.tr("sorry_late")) {
+            Button("sorry i'm late but good to go again!") {
                 vm.resumeWork()
             }
             .buttonStyle(MainButtonStyle())
         }
 
         if vm.state == .breakRunning {
-            Button(L10n.tr("skip_break")) {
+            Button("skip break") {
                 vm.resumeWork()
             }
             .buttonStyle(SecondaryButtonStyle())
         }
 
         if vm.state != .idle {
-            Button(L10n.tr("reset_timer")) {
+            Button("reset timer") {
                 vm.resetTimer()
             }
             .buttonStyle(SecondaryButtonStyle())
@@ -347,25 +347,25 @@ struct ContentView: View {
 
     private var greetingText: String {
         let name = userFirstName.trimmingCharacters(in: .whitespacesAndNewlines)
-        return name.isEmpty ? L10n.tr("welcome_back") : L10n.tr("hi_name", name.lowercased())
+        return name.isEmpty ? "welcome back" : "hi, \(name.lowercased())"
     }
 
     private var statusText: String {
         switch vm.state {
         case .idle:
-            return vm.hasCompletedSessionToday ? L10n.tr("status_you_showed_up") : L10n.tr("status_ready_when_you_are")
+            return vm.hasCompletedSessionToday ? "you showed up today" : "ready when you are"
         case .focusRunning:
-            return L10n.tr("status_work_in_progress")
+            return "work in progress"
         case .waitingForBreakConfirmation:
-            return L10n.tr("status_nice_work_next", vm.upcomingBreakLabel)
+            return "nice work. \(vm.upcomingBreakLabel) next"
         case .breakRunning:
-            return L10n.tr("status_then_we_go_again", vm.upcomingBreakLabel)
+            return "\(vm.upcomingBreakLabel), then we can go again"
         case .waitingForWorkConfirmation:
-            return L10n.tr("status_ready_continue")
+            return "ready to continue?"
         case .overdueBreak:
-            return L10n.tr("status_short_break_counts")
+            return "a short break still counts"
         case .overdueWork:
-            return L10n.tr("status_restart_gently")
+            return "restart gently"
         }
     }
 
@@ -373,27 +373,27 @@ struct ContentView: View {
         switch vm.state {
         case .idle:
             if vm.todaySessionCount == 0 {
-                return L10n.tr("bubble_hey_ready")
+                return "hey, i’m ready when you are"
             }
             if vm.streakDays >= 3 {
-                return L10n.tr("bubble_quietly_proud")
+                return "you showed up today. quietly proud of you."
             }
             if let lastFocusScore = vm.mostRecentFocusScore, lastFocusScore <= 2 {
-                return L10n.tr("bubble_short_session_counts")
+                return "it’s okay. a short session still counts."
             }
-            return L10n.tr("bubble_another_round")
+            return "ready for another gentle round?"
         case .focusRunning:
-            return L10n.tr("bubble_keep_up")
+            return "keep up! you're doing great!"
         case .waitingForBreakConfirmation:
-            return L10n.tr("bubble_nice_work_counted")
+            return "nice work. that counted."
         case .breakRunning:
-            return L10n.tr("bubble_break_time")
+            return "whoa! it's break-time!"
         case .waitingForWorkConfirmation:
-            return L10n.tr("bubble_come_back")
+            return "come back, i miss you already."
         case .overdueBreak:
-            return L10n.tr("bubble_break_time")
+            return "whoa! it's break-time!"
         case .overdueWork:
-            return L10n.tr("bubble_come_back")
+            return "come back, i miss you already."
         }
     }
 
@@ -420,13 +420,13 @@ struct ContentView: View {
 
         var lines: [String] = []
         if vm.todaySessionCount > 0 {
-            lines.append(L10n.tr("completion_sessions_today", vm.todaySessionCount, vm.todaySessionCount == 1 ? "" : "s"))
+            lines.append("you’ve done \(vm.todaySessionCount) session\(vm.todaySessionCount == 1 ? "" : "s") today.")
         }
         if vm.todayFocusMinutes > 0 {
-            lines.append(L10n.tr("completion_focus_duration", formattedDuration(minutes: vm.todayFocusMinutes)))
+            lines.append("that’s \(formattedDuration(minutes: vm.todayFocusMinutes)) of focus.")
         }
         if vm.streakDays > 1 {
-            lines.append(L10n.tr("completion_streak", vm.streakDays))
+            lines.append("you’re on a \(vm.streakDays)-day streak.")
         }
         return Array(lines.prefix(2))
     }
@@ -493,7 +493,7 @@ private struct StartRitualOverlay: View {
         Color.black.opacity(0.15)
             .ignoresSafeArea()
             .overlay {
-                Text(L10n.tr("take_a_breath"))
+                Text("take a breath")
                     .font(.system(size: 24, weight: .medium, design: .rounded))
                     .foregroundStyle(.white.opacity(0.95))
                     .padding(.horizontal, 28)
@@ -537,7 +537,7 @@ struct StreakReactionView: View {
             }
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(L10n.tr("streak_label", streakDays, streakDays == 1 ? "" : "s"))
+                Text("streak: \(streakDays) day\(streakDays == 1 ? "" : "s")")
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
                 Text(reactionText)
                     .font(.system(size: 12, weight: .medium, design: .rounded))
@@ -597,13 +597,13 @@ struct StreakReactionView: View {
         }
         switch mood {
         case .sleepy:
-            return L10n.tr("reaction_sleepy")
+            return "shh... warming up ☁️"
         case .happy:
-            return L10n.tr("reaction_happy")
+            return "yay, you’re on a roll!"
         case .excited:
-            return L10n.tr("reaction_excited")
+            return "woah, amazing focus!"
         case .golden:
-            return L10n.tr("reaction_golden")
+            return "golden cloud sighting ✨"
         }
     }
 }

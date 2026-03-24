@@ -11,7 +11,6 @@ import StoreKit
 struct wellwellApp: App {
     @StateObject private var vm = TimerViewModel()
     @StateObject private var purchaseManager = PurchaseManager()
-    @AppStorage("preferredLanguage") private var preferredLanguage = AppLanguage.english.rawValue
 
     init() {
         NotificationManager.shared.requestPermission()
@@ -22,19 +21,18 @@ struct wellwellApp: App {
             ContentView()
                 .environmentObject(vm)
                 .environmentObject(purchaseManager)
-                .environment(\.locale, Locale(identifier: preferredLanguage))
                 .task {
                     await purchaseManager.prepare()
                 }
         }
         .commands {
-            CommandMenu(L10n.tr("focus_command_menu")) {
-                Button(L10n.tr("start_focus_session")) {
+            CommandMenu("Focus") {
+                Button("Start Focus Session") {
                     vm.startWork()
                 }
                 .keyboardShortcut("f", modifiers: [.command, .shift])
 
-                Button(L10n.tr("reset_timer")) {
+                Button("Reset Timer") {
                     vm.resetTimer()
                 }
                 .keyboardShortcut("r", modifiers: [.command, .shift])
@@ -45,7 +43,6 @@ struct wellwellApp: App {
             MenuBarContentView()
                 .environmentObject(vm)
                 .environmentObject(purchaseManager)
-                .environment(\.locale, Locale(identifier: preferredLanguage))
         } label: {
             Text(menuBarTitle)
                 .monospacedDigit()
@@ -59,17 +56,17 @@ struct wellwellApp: App {
         case .idle:
             return "wellwell"
         case .focusRunning:
-            return L10n.tr("menu_focus_time", vm.formattedTime())
+            return "focus \(vm.formattedTime())"
         case .waitingForBreakConfirmation:
-            return L10n.tr("menu_break_question")
+            return "break?"
         case .breakRunning:
-            return L10n.tr("menu_break_time", vm.formattedTime())
+            return "break \(vm.formattedTime())"
         case .waitingForWorkConfirmation:
-            return L10n.tr("menu_work_question")
+            return "work?"
         case .overdueBreak:
-            return L10n.tr("menu_break_alert")
+            return "break!"
         case .overdueWork:
-            return L10n.tr("menu_work_alert")
+            return "work!"
         }
     }
 
