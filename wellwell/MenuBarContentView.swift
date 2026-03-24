@@ -44,6 +44,9 @@ struct MenuBarContentView: View {
                             .padding(6)
                             .contentShape(Rectangle())
                     }
+                    .menuIndicator(.hidden)
+                    .menuStyle(.borderlessButton)
+                    .fixedSize()
                 }
 
                 CharacterView(
