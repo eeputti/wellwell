@@ -142,7 +142,7 @@ struct ContentView: View {
                 cloudColor: selectedCloudColor,
                 isLocked: false
             )
-            .frame(width: scaled(150, by: scale), height: scaled(110, by: scale))
+            .frame(width: scaled(110, by: scale), height: scaled(80, by: scale))
 
             Spacer(minLength: scaled(10, by: scale))
 
@@ -446,21 +446,34 @@ struct ContentView: View {
 
     @ViewBuilder
     private var compactFocusActionButtons: some View {
-        Button(vm.isPaused ? "go!" : "pause") {
-            if vm.isPaused {
-                vm.continuePausedSession()
-            } else {
-                vm.pauseCurrentSession()
+        switch vm.state {
+        case .idle:
+            Button("let’s begin!") {
+                startSessionWithRitual()
             }
-        }
-        .buttonStyle(MainButtonStyle())
-        .disabled(!(vm.state == .focusRunning || vm.state == .breakRunning))
+            .buttonStyle(MainButtonStyle())
+            .keyboardShortcut("f", modifiers: [.command, .shift])
+            .disabled(isStartingSession)
 
-        Button("skip session") {
-            skipSessionFromCompactMode()
+        case .focusRunning, .breakRunning:
+            Button(vm.isPaused ? "go!" : "pause") {
+                if vm.isPaused {
+                    vm.continuePausedSession()
+                } else {
+                    vm.pauseCurrentSession()
+                }
+            }
+            .buttonStyle(MainButtonStyle())
+
+            Button("skip session") {
+                skipSessionFromCompactMode()
+            }
+            .buttonStyle(SecondaryButtonStyle())
+            .disabled(!canSkipSessionInCompactMode)
+
+        default:
+            EmptyView()
         }
-        .buttonStyle(SecondaryButtonStyle())
-        .disabled(!canSkipSessionInCompactMode)
     }
 
     private var greetingText: String {
@@ -494,7 +507,7 @@ struct ContentView: View {
                 return "hey, i’m ready when you are"
             }
             if vm.streakDays >= 3 {
-                return "you showed up today. quietly proud of you."
+                return "you showed up today. proud of you."
             }
             if let lastFocusScore = vm.mostRecentFocusScore, lastFocusScore <= 2 {
                 return "it’s okay. a short session still counts."
