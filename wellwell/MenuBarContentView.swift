@@ -18,160 +18,162 @@ struct MenuBarContentView: View {
     @AppStorage("selectedCloudColor") private var selectedCloudColorValue = CloudColor.default.storedValue
 
     var body: some View {
-        VStack(spacing: 14) {
-            HStack {
-                Spacer()
-                Menu {
-                    Button("settings") {
-                        openWindow(id: "settings")
-                    }
-                    Button("stats") {
-                        openWindow(id: "stats")
-                    }
-                    Divider()
-                    Button("open main window") {
-                        openWindow(id: "main")
-                    }
-                    if vm.state != .idle {
-                        Button("reset timer") {
-                            vm.resetTimer()
+        ScrollView {
+            VStack(spacing: 14) {
+                HStack {
+                    Spacer()
+                    Menu {
+                        Button("settings") {
+                            openWindow(id: "settings")
                         }
+                        Button("stats") {
+                            openWindow(id: "stats")
+                        }
+                        Divider()
+                        Button("open main window") {
+                            openWindow(id: "main")
+                        }
+                        if vm.state != .idle {
+                            Button("reset timer") {
+                                vm.resetTimer()
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                            .font(.title3.weight(.semibold))
                     }
-                } label: {
-                    Image(systemName: "ellipsis.circle")
-                        .font(.title3.weight(.semibold))
+                    .menuIndicator(.hidden)
+                    .menuStyle(.borderlessButton)
+                    .fixedSize()
                 }
-                .menuIndicator(.hidden)
-                .menuStyle(.borderlessButton)
-                .fixedSize()
-            }
 
-            CharacterView(
-                character: selectedCharacterFamily,
-                expression: currentExpression,
-                cloudColor: selectedCloudColor,
-                isLocked: false
-            )
-                .frame(width: 120, height: 90)
+                CharacterView(
+                    character: selectedCharacterFamily,
+                    expression: currentExpression,
+                    cloudColor: selectedCloudColor,
+                    isLocked: false
+                )
+                    .frame(width: 120, height: 90)
 
-            Text(vm.formattedTime())
-                .font(.system(size: 34, weight: .light, design: .rounded))
-                .monospacedDigit()
+                Text(vm.formattedTime())
+                    .font(.system(size: 34, weight: .light, design: .rounded))
+                    .monospacedDigit()
 
-            Text(statusText)
-                .font(.headline)
-                .foregroundStyle(.secondary)
+                Text(statusText)
+                    .font(.headline)
+                    .foregroundStyle(.secondary)
 
-            Button(primaryActionTitle) {
-                handlePrimaryAction()
-            }
-            .buttonStyle(.borderedProminent)
+                Button(primaryActionTitle) {
+                    handlePrimaryAction()
+                }
+                .buttonStyle(.borderedProminent)
 
-            if vm.state == .idle {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("cloud color")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    CharacterColorPickerView(
-                        selectedCloudColorValue: $selectedCloudColorValue,
-                        swatchSize: 14,
-                        spacing: 8,
-                        selectedBorderColor: .primary,
-                        unselectedBorderColor: Color.secondary.opacity(0.35)
+                if vm.state == .idle {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("cloud color")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        CharacterColorPickerView(
+                            selectedCloudColorValue: $selectedCloudColorValue,
+                            swatchSize: 14,
+                            spacing: 8,
+                            selectedBorderColor: .primary,
+                            unselectedBorderColor: Color.secondary.opacity(0.35)
+                        )
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    settingsPanel
+                }
+
+                Text(bubbleText)
+                    .font(.subheadline)
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(.primary)
+                    .padding(.horizontal, 8)
+
+                if vm.showPostSessionFlow && vm.state == .waitingForBreakConfirmation {
+                    VStack(spacing: 6) {
+                        Text("nice work ✨")
+                            .font(.subheadline.weight(.semibold))
+                        Text("today: \(vm.todaySessionCount) sessions • \(vm.todayFocusMinutes) min")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Text("take an earned break")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(8)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(Color.primary.opacity(0.05))
                     )
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                settingsPanel
-            }
 
+                if vm.state == .waitingForBreakConfirmation || vm.state == .overdueBreak {
+                    Button("take an earned break") {
+                        vm.startBreak()
+                    }
+                    .buttonStyle(.borderedProminent)
 
-            Text(bubbleText)
-                .font(.subheadline)
-                .multilineTextAlignment(.center)
-                .foregroundStyle(.primary)
-                .padding(.horizontal, 8)
-
-            if vm.showPostSessionFlow && vm.state == .waitingForBreakConfirmation {
-                VStack(spacing: 6) {
-                    Text("nice work ✨")
-                        .font(.subheadline.weight(.semibold))
-                    Text("today: \(vm.todaySessionCount) sessions • \(vm.todayFocusMinutes) min")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Text("take an earned break")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    Button("continue session at your own risk") {
+                        vm.startWork()
+                    }
+                    .buttonStyle(.bordered)
                 }
-                .padding(8)
-                .background(
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(Color.primary.opacity(0.05))
-                )
-            }
 
-            if vm.state == .waitingForBreakConfirmation || vm.state == .overdueBreak {
-                Button("take an earned break") {
-                    vm.startBreak()
+                if vm.state == .focusRunning {
+                    Button("take an early break") {
+                        vm.startBreak(forceShortBreak: true)
+                    }
+                    .buttonStyle(.bordered)
                 }
-                .buttonStyle(.borderedProminent)
 
-                Button("continue session at your own risk") {
-                    vm.startWork()
+                if vm.state == .breakRunning {
+                    Button("skip break") {
+                        vm.resumeWork()
+                    }
+                    .buttonStyle(.bordered)
                 }
-                .buttonStyle(.bordered)
-            }
 
-            if vm.state == .focusRunning {
-                Button("take an early break") {
-                    vm.startBreak(forceShortBreak: true)
+                if vm.state == .waitingForWorkConfirmation || vm.state == .overdueWork {
+                    Button("i'm back again!") {
+                        vm.resumeWork()
+                    }
+                    .buttonStyle(.borderedProminent)
                 }
-                .buttonStyle(.bordered)
-            }
 
-            if vm.state == .breakRunning {
-                Button("skip break") {
-                    vm.resumeWork()
+                if vm.state != .idle {
+                    Button("reset timer") {
+                        vm.resetTimer()
+                    }
+                    .buttonStyle(.bordered)
                 }
-                .buttonStyle(.bordered)
-            }
 
-            if vm.state == .waitingForWorkConfirmation || vm.state == .overdueWork {
-                Button("i'm back again!") {
-                    vm.resumeWork()
+                Divider()
+
+                Button("open main window") {
+                    openWindow(id: "main")
                 }
-                .buttonStyle(.borderedProminent)
-            }
+                .keyboardShortcut("1", modifiers: [.command])
 
-            if vm.state != .idle {
-                Button("reset timer") {
-                    vm.resetTimer()
+                Button("open settings") {
+                    openWindow(id: "settings")
                 }
                 .buttonStyle(.bordered)
-            }
 
-            Divider()
+                Button("open stats") {
+                    openWindow(id: "stats")
+                }
+                .buttonStyle(.bordered)
 
-            Button("open main window") {
-                openWindow(id: "main")
+                Button("quit wellwell") {
+                    NSApplication.shared.terminate(nil)
+                }
             }
-            .keyboardShortcut("1", modifiers: [.command])
-
-            Button("open settings") {
-                openWindow(id: "settings")
-            }
-            .buttonStyle(.bordered)
-
-            Button("open stats") {
-                openWindow(id: "stats")
-            }
-            .buttonStyle(.bordered)
-
-            Button("quit wellwell") {
-                NSApplication.shared.terminate(nil)
-            }
+            .padding(16)
         }
-        .padding(16)
-        .frame(width: 280)
+        .scrollIndicators(.never)
+        .frame(minWidth: 320, idealWidth: 340, maxWidth: 420, minHeight: 640, alignment: .top)
     }
 
     private var statusText: String {
