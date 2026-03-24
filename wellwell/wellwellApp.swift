@@ -11,6 +11,7 @@ import StoreKit
 struct wellwellApp: App {
     @StateObject private var vm = TimerViewModel()
     @StateObject private var purchaseManager = PurchaseManager()
+    @AppStorage("preferredLanguage") private var preferredLanguage = AppLanguage.english.rawValue
 
     init() {
         NotificationManager.shared.requestPermission()
@@ -21,18 +22,19 @@ struct wellwellApp: App {
             ContentView()
                 .environmentObject(vm)
                 .environmentObject(purchaseManager)
+                .environment(\.locale, Locale(identifier: preferredLanguage))
                 .task {
                     await purchaseManager.prepare()
                 }
         }
         .commands {
-            CommandMenu("Focus") {
-                Button("Start Focus Session") {
+            CommandMenu(L10n.tr("focus_command_menu")) {
+                Button(L10n.tr("start_focus_session")) {
                     vm.startWork()
                 }
                 .keyboardShortcut("f", modifiers: [.command, .shift])
 
-                Button("Reset Timer") {
+                Button(L10n.tr("reset_timer")) {
                     vm.resetTimer()
                 }
                 .keyboardShortcut("r", modifiers: [.command, .shift])
@@ -43,6 +45,7 @@ struct wellwellApp: App {
             MenuBarContentView()
                 .environmentObject(vm)
                 .environmentObject(purchaseManager)
+                .environment(\.locale, Locale(identifier: preferredLanguage))
         } label: {
             Text(menuBarTitle)
                 .monospacedDigit()

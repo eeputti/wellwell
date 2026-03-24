@@ -29,24 +29,24 @@ final class NotificationManager {
     func notifyFocusEnded() {
         send(
             identifier: NotificationID.focusEnded,
-            title: "Focus session complete",
-            body: "Great work! Start your break when you're ready."
+            title: L10n.tr("notification_focus_complete_title"),
+            body: L10n.tr("notification_focus_complete_body")
         )
     }
 
     func notifyBreakEnded() {
         send(
             identifier: NotificationID.breakEnded,
-            title: "Break finished",
-            body: "You're recharged—resume work when you're ready."
+            title: L10n.tr("notification_break_finished_title"),
+            body: L10n.tr("notification_break_finished_body")
         )
     }
 
     func scheduleBreakFollowUp(after seconds: TimeInterval = 120) {
         schedule(
             identifier: NotificationID.breakReminder,
-            title: "Break still waiting",
-            body: "You haven't started your break yet. Take a quick reset.",
+            title: L10n.tr("notification_break_waiting_title"),
+            body: L10n.tr("notification_break_waiting_body"),
             after: seconds
         )
     }
@@ -54,8 +54,8 @@ final class NotificationManager {
     func scheduleWorkFollowUp(after seconds: TimeInterval = 120) {
         schedule(
             identifier: NotificationID.workReminder,
-            title: "Time to resume work",
-            body: "You haven't resumed work yet. Jump back in when ready.",
+            title: L10n.tr("notification_resume_work_title"),
+            body: L10n.tr("notification_resume_work_body"),
             after: seconds
         )
     }

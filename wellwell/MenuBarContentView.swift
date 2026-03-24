@@ -27,18 +27,18 @@ struct MenuBarContentView: View {
             HStack {
                 Spacer()
                 Menu {
-                    Button("settings") {
+                    Button(L10n.tr("settings")) {
                         showSettings = true
                     }
-                    Button("stats") {
+                    Button(L10n.tr("stats")) {
                         showStats = true
                     }
                     Divider()
-                    Button("open main window") {
+                    Button(L10n.tr("open_main_window")) {
                         openWindow(id: "main")
                     }
                     if vm.state != .idle {
-                        Button("reset timer") {
+                        Button(L10n.tr("reset_timer")) {
                             vm.resetTimer()
                         }
                     }
@@ -74,7 +74,7 @@ struct MenuBarContentView: View {
             
             if vm.state == .idle {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("cloud color")
+                    Text(L10n.tr("cloud_color"))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     CharacterColorPickerView(
@@ -98,12 +98,12 @@ struct MenuBarContentView: View {
 
             if vm.showPostSessionFlow && vm.state == .waitingForBreakConfirmation {
                 VStack(spacing: 6) {
-                    Text("nice work ✨")
+                    Text(L10n.tr("nice_work"))
                         .font(.subheadline.weight(.semibold))
-                    Text("today: \(vm.todaySessionCount) sessions • \(vm.todayFocusMinutes) min")
+                    Text(L10n.tr("today_sessions_minutes", vm.todaySessionCount, vm.todayFocusMinutes))
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                    Text("take an earned break")
+                    Text(L10n.tr("take_earned_break"))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -115,7 +115,7 @@ struct MenuBarContentView: View {
             }
 
             if vm.state == .idle {
-                Button("start focus") {
+                Button(L10n.tr("start_focus")) {
                     vm.startWork()
                 }
                 .buttonStyle(.borderedProminent)
@@ -123,40 +123,40 @@ struct MenuBarContentView: View {
             }
 
             if vm.state == .waitingForBreakConfirmation || vm.state == .overdueBreak {
-                Button("take an earned break") {
+                Button(L10n.tr("take_earned_break")) {
                     vm.startBreak()
                 }
                 .buttonStyle(.borderedProminent)
 
-                Button("continue session at your own risk") {
+                Button(L10n.tr("continue_session_risk")) {
                     vm.startWork()
                 }
                 .buttonStyle(.bordered)
             }
 
             if vm.state == .focusRunning {
-                Button("take an earned break") {
+                Button(L10n.tr("take_earned_break")) {
                     vm.startBreak()
                 }
                 .buttonStyle(.bordered)
             }
 
             if vm.state == .breakRunning {
-                Button("skip break") {
+                Button(L10n.tr("skip_break")) {
                     vm.resumeWork()
                 }
                 .buttonStyle(.bordered)
             }
 
             if vm.state == .waitingForWorkConfirmation || vm.state == .overdueWork {
-                Button("sorry i'm late but good to go again!") {
+                Button(L10n.tr("sorry_late")) {
                     vm.resumeWork()
                 }
                 .buttonStyle(.borderedProminent)
             }
 
             if vm.state != .idle {
-                Button("reset timer") {
+                Button(L10n.tr("reset_timer")) {
                     vm.resetTimer()
                 }
                 .buttonStyle(.bordered)
@@ -164,12 +164,12 @@ struct MenuBarContentView: View {
 
             Divider()
 
-            Button("open main window") {
+            Button(L10n.tr("open_main_window")) {
                 openWindow(id: "main")
             }
             .keyboardShortcut("1", modifiers: [.command])
 
-            Button("quit wellwell") {
+            Button(L10n.tr("quit_wellwell")) {
                 NSApplication.shared.terminate(nil)
             }
         }
@@ -196,38 +196,38 @@ struct MenuBarContentView: View {
     private var statusText: String {
         switch vm.state {
         case .idle:
-            return vm.hasCompletedSessionToday ? "you showed up today" : "ready when you are"
+            return vm.hasCompletedSessionToday ? L10n.tr("status_you_showed_up") : L10n.tr("status_ready_when_you_are")
         case .focusRunning:
-            return "work in progress"
+            return L10n.tr("status_work_in_progress")
         case .waitingForBreakConfirmation:
-            return "time for a \(vm.upcomingBreakLabel)"
+            return L10n.tr("status_time_for_break", vm.upcomingBreakLabel)
         case .breakRunning:
-            return "\(vm.upcomingBreakLabel) session"
+            return L10n.tr("status_break_session", vm.upcomingBreakLabel)
         case .waitingForWorkConfirmation:
-            return "good to go again?"
+            return L10n.tr("status_good_to_go_again")
         case .overdueBreak:
-            return "gentle break reminder"
+            return L10n.tr("status_gentle_break_reminder")
         case .overdueWork:
-            return "restart gently"
+            return L10n.tr("status_restart_gently")
         }
     }
 
     private var bubbleText: String {
         switch vm.state {
         case .idle:
-            return vm.todaySessionCount == 0 ? "i’m ready when you are" : "one focused block is enough for today."
+            return vm.todaySessionCount == 0 ? L10n.tr("bubble_ready") : L10n.tr("bubble_one_block_enough")
         case .focusRunning:
-            return "keep up! you're doing great!"
+            return L10n.tr("bubble_keep_up")
         case .waitingForBreakConfirmation:
-            return "time for a \(vm.upcomingBreakLabel)"
+            return L10n.tr("status_time_for_break", vm.upcomingBreakLabel)
         case .breakRunning:
-            return "whoa! it's break-time!"
+            return L10n.tr("bubble_break_time")
         case .waitingForWorkConfirmation:
-            return "come back, i miss you already."
+            return L10n.tr("bubble_come_back")
         case .overdueBreak:
-            return "whoa! it's break-time!"
+            return L10n.tr("bubble_break_time")
         case .overdueWork:
-            return "come back, i miss you already."
+            return L10n.tr("bubble_come_back")
         }
     }
 

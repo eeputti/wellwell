@@ -122,7 +122,7 @@ struct ContentView: View {
                     .font(.title2.weight(.semibold))
                     .foregroundStyle(.black.opacity(0.78))
 
-                Text("what a lovely day to work!")
+                Text(L10n.tr("header_lovely_day"))
                     .font(.subheadline)
                     .foregroundStyle(.black.opacity(0.55))
             }
@@ -130,13 +130,13 @@ struct ContentView: View {
             Spacer()
 
             HStack(spacing: 10) {
-                Button("stats") {
+                Button(L10n.tr("stats")) {
                     showStats = true
                 }
                 .buttonStyle(SecondaryButtonStyle())
                 .keyboardShortcut("2", modifiers: [.command])
 
-                Button("settings") {
+                Button(L10n.tr("settings")) {
                     showSettings = true
                 }
                 .buttonStyle(SecondaryButtonStyle())
@@ -169,7 +169,7 @@ struct ContentView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 10) {
                 Label {
-                    Text("\(vm.streakDays)-day streak")
+                    Text(L10n.tr("streak_days", vm.streakDays))
                         .font(.subheadline.weight(.semibold))
                 } icon: {
                     Image(systemName: vm.streakDays >= 3 ? "flame.fill" : "flame")
@@ -178,7 +178,7 @@ struct ContentView: View {
 
                 Spacer()
 
-                Text("\(vm.todaySessionCount) today")
+                Text(L10n.tr("today_count", vm.todaySessionCount))
                     .font(.caption.weight(.medium))
                     .foregroundStyle(.black.opacity(0.58))
                     .padding(.horizontal, 10)
@@ -262,15 +262,15 @@ struct ContentView: View {
 
     private var postSessionCard: some View {
         VStack(spacing: 10) {
-            Text("nice work ✨")
+            Text(L10n.tr("nice_work"))
                 .font(.headline)
                 .foregroundStyle(.black.opacity(0.75))
 
-            Text("today: \(vm.todaySessionCount) sessions • \(vm.todayFocusMinutes) min focus")
+            Text(L10n.tr("today_sessions_minutes", vm.todaySessionCount, vm.todayFocusMinutes))
                 .font(.subheadline)
                 .foregroundStyle(.black.opacity(0.55))
 
-            Text("take an earned break")
+            Text(L10n.tr("take_earned_break"))
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(.black.opacity(0.7))
         }
@@ -296,7 +296,7 @@ struct ContentView: View {
         }
 
         if vm.state == .focusRunning {
-            Button("take an earned break") {
+            Button(L10n.tr("take_earned_break")) {
                 vm.startBreak()
             }
             .buttonStyle(SecondaryButtonStyle())
@@ -312,33 +312,33 @@ struct ContentView: View {
         }
 
         if vm.state == .waitingForBreakConfirmation || vm.state == .overdueBreak {
-            Button("take an earned break") {
+            Button(L10n.tr("take_earned_break")) {
                 vm.startBreak()
             }
             .buttonStyle(MainButtonStyle())
 
-            Button("continue session at your own risk") {
+            Button(L10n.tr("continue_session_risk")) {
                 vm.startWork()
             }
             .buttonStyle(SecondaryButtonStyle())
         }
 
         if vm.state == .waitingForWorkConfirmation || vm.state == .overdueWork {
-            Button("sorry i'm late but good to go again!") {
+            Button(L10n.tr("sorry_late")) {
                 vm.resumeWork()
             }
             .buttonStyle(MainButtonStyle())
         }
 
         if vm.state == .breakRunning {
-            Button("skip break") {
+            Button(L10n.tr("skip_break")) {
                 vm.resumeWork()
             }
             .buttonStyle(SecondaryButtonStyle())
         }
 
         if vm.state != .idle {
-            Button("reset timer") {
+            Button(L10n.tr("reset_timer")) {
                 vm.resetTimer()
             }
             .buttonStyle(SecondaryButtonStyle())
@@ -353,9 +353,9 @@ struct ContentView: View {
     private var statusText: String {
         switch vm.state {
         case .idle:
-            return vm.hasCompletedSessionToday ? "you showed up today" : "ready when you are"
+            return vm.hasCompletedSessionToday ? L10n.tr("status_you_showed_up") : L10n.tr("status_ready_when_you_are")
         case .focusRunning:
-            return "work in progress"
+            return L10n.tr("status_work_in_progress")
         case .waitingForBreakConfirmation:
             return "nice work. \(vm.upcomingBreakLabel) next"
         case .breakRunning:
@@ -365,7 +365,7 @@ struct ContentView: View {
         case .overdueBreak:
             return "a short break still counts"
         case .overdueWork:
-            return "restart gently"
+            return L10n.tr("status_restart_gently")
         }
     }
 
@@ -383,17 +383,17 @@ struct ContentView: View {
             }
             return "ready for another gentle round?"
         case .focusRunning:
-            return "keep up! you're doing great!"
+            return L10n.tr("bubble_keep_up")
         case .waitingForBreakConfirmation:
             return "nice work. that counted."
         case .breakRunning:
-            return "whoa! it's break-time!"
+            return L10n.tr("bubble_break_time")
         case .waitingForWorkConfirmation:
-            return "come back, i miss you already."
+            return L10n.tr("bubble_come_back")
         case .overdueBreak:
-            return "whoa! it's break-time!"
+            return L10n.tr("bubble_break_time")
         case .overdueWork:
-            return "come back, i miss you already."
+            return L10n.tr("bubble_come_back")
         }
     }
 
