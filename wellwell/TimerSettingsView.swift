@@ -17,25 +17,45 @@ struct TimerSettingsView: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        NavigationStack {
+        ZStack(alignment: .topTrailing) {
+            Color(red: 0.96, green: 0.95, blue: 0.92)
+                .ignoresSafeArea()
+
             ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 18) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("your settings")
+                            .font(.title2.weight(.semibold))
+                            .foregroundStyle(.black.opacity(0.75))
+                        Text("shape your focus experience")
+                            .font(.title3.weight(.medium))
+                            .foregroundStyle(.black.opacity(0.55))
+                    }
+
                     timerSection
                     accountSection
                     appSection
+
+                    Spacer(minLength: 0)
                 }
-                .padding(20)
+                .padding(.horizontal, 24)
+                .padding(.vertical, 20)
+                .frame(minWidth: 560, minHeight: 420, alignment: .topLeading)
             }
-            .navigationTitle("settings")
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("done") {
-                        dismiss()
-                    }
-                }
+
+            Button {
+                dismiss()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 34, weight: .light))
+                    .foregroundStyle(.black)
+                    .frame(width: 44, height: 44)
             }
+            .buttonStyle(.plain)
+            .padding(.top, 16)
+            .padding(.trailing, 22)
+            .accessibilityLabel("close settings")
         }
-        .frame(minWidth: 560, minHeight: 560)
         .sheet(isPresented: $showPaywall) {
             ProPaywallView()
                 .environmentObject(purchaseManager)
@@ -129,18 +149,19 @@ struct TimerSettingsView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.headline)
+                    .foregroundStyle(.black.opacity(0.72))
                 Text(subtitle)
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.black.opacity(0.55))
             }
 
             content()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
+        .padding(14)
         .background(
-            RoundedRectangle(cornerRadius: 14)
-                .fill(Color.primary.opacity(0.05))
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.white.opacity(0.84))
         )
     }
 
@@ -153,9 +174,10 @@ struct TimerSettingsView: View {
         VStack(alignment: .leading, spacing: 2) {
             HStack {
                 Text(title)
+                    .foregroundStyle(.black.opacity(0.72))
                 Spacer()
                 Text(suffix.isEmpty ? "\(value.wrappedValue)" : "\(value.wrappedValue) \(suffix)")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.black.opacity(0.56))
             }
             Slider(
                 value: Binding(
@@ -171,6 +193,7 @@ struct TimerSettingsView: View {
     private func textRow<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
         HStack(alignment: .center) {
             Text(title)
+                .foregroundStyle(.black.opacity(0.72))
                 .frame(width: 90, alignment: .leading)
             content()
             Spacer()

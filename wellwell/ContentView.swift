@@ -16,16 +16,17 @@ struct ContentView: View {
     var body: some View {
         GeometryReader { proxy in
             let isCompact = shouldUseCompactLayout(for: proxy.size)
+            let uiScale = interfaceScale(for: proxy.size, compact: isCompact)
 
             ZStack {
                 Color(red: 0.96, green: 0.95, blue: 0.92)
                     .ignoresSafeArea()
 
-                VStack(spacing: isCompact ? 14 : 22) {
+                VStack(spacing: scaled(isCompact ? 14 : 22, by: uiScale)) {
                     if isCompact {
-                        compactTopRow
+                        compactTopRow(scale: uiScale)
                     } else {
-                        headerRow
+                        headerRow(scale: uiScale)
                     }
 
                     if vm.showStreakReaction && !isCompact {
@@ -38,20 +39,20 @@ struct ContentView: View {
                     }
 
                     if isCompact {
-                        compactTimerCard
+                        compactTimerCard(scale: uiScale)
                     } else {
-                        cloudCard
-                        consistencyCard
-                        timerCard
+                        cloudCard(scale: uiScale)
+                        consistencyCard(scale: uiScale)
+                        timerCard(scale: uiScale)
                         if vm.showPostSessionFlow && vm.state == .waitingForBreakConfirmation {
-                            postSessionCard
+                            postSessionCard(scale: uiScale)
                         }
                     }
 
                     Spacer(minLength: 0)
                 }
-                .frame(minWidth: 340, minHeight: 290)
-                .padding(isCompact ? 16 : 30)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(scaled(isCompact ? 16 : 30, by: uiScale))
 
                 if showStartRitualOverlay {
                     StartRitualOverlay()
@@ -97,7 +98,7 @@ struct ContentView: View {
         .animation(.easeInOut(duration: 0.25), value: showStartRitualOverlay)
     }
 
-    private var compactTopRow: some View {
+    private func compactTopRow(scale: CGFloat) -> some View {
         HStack(alignment: .top, spacing: 10) {
             CharacterView(
                 character: .cloud,
@@ -105,31 +106,31 @@ struct ContentView: View {
                 cloudColor: selectedCloudColor,
                 isLocked: false
             )
-            .frame(width: 72, height: 52)
+            .frame(width: scaled(72, by: scale), height: scaled(52, by: scale))
 
-            Spacer(minLength: 8)
+            Spacer(minLength: scaled(8, by: scale))
 
-            SpeechBubbleView(text: bubbleText, fontSize: 14, showTail: false)
-                .frame(maxWidth: 190, alignment: .trailing)
+            SpeechBubbleView(text: bubbleText, fontSize: scaled(14, by: scale), showTail: false)
+                .frame(maxWidth: scaled(190, by: scale), alignment: .trailing)
         }
         .frame(maxWidth: .infinity, alignment: .topLeading)
     }
 
-    private var headerRow: some View {
+    private func headerRow(scale: CGFloat) -> some View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(greetingText)
-                    .font(.title2.weight(.semibold))
+                    .font(.system(size: scaled(28, by: scale), weight: .semibold, design: .rounded))
                     .foregroundStyle(.black.opacity(0.78))
 
                 Text("what a lovely day to work!")
-                    .font(.subheadline)
+                    .font(.system(size: scaled(15, by: scale), weight: .regular, design: .rounded))
                     .foregroundStyle(.black.opacity(0.55))
             }
 
             Spacer()
 
-            HStack(spacing: 10) {
+            HStack(spacing: scaled(10, by: scale)) {
                 Button("stats") {
                     showStats = true
                 }
@@ -145,9 +146,9 @@ struct ContentView: View {
         }
     }
 
-    private var cloudCard: some View {
-        VStack(spacing: 14) {
-            SpeechBubbleView(text: bubbleText)
+    private func cloudCard(scale: CGFloat) -> some View {
+        VStack(spacing: scaled(14, by: scale)) {
+            SpeechBubbleView(text: bubbleText, fontSize: scaled(28, by: scale))
 
             CharacterView(
                 character: .cloud,
@@ -155,22 +156,22 @@ struct ContentView: View {
                 cloudColor: selectedCloudColor,
                 isLocked: false
             )
-            .frame(width: 260, height: 180)
+            .frame(width: scaled(260, by: scale), height: scaled(180, by: scale))
         }
-        .padding(.vertical, 18)
+        .padding(.vertical, scaled(18, by: scale))
         .frame(maxWidth: .infinity)
         .background(
-            RoundedRectangle(cornerRadius: 26)
+            RoundedRectangle(cornerRadius: scaled(26, by: scale))
                 .fill(Color.white.opacity(0.82))
         )
     }
 
-    private var consistencyCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 10) {
+    private func consistencyCard(scale: CGFloat) -> some View {
+        VStack(alignment: .leading, spacing: scaled(10, by: scale)) {
+            HStack(spacing: scaled(10, by: scale)) {
                 Label {
                     Text("\(vm.streakDays)-day streak")
-                        .font(.subheadline.weight(.semibold))
+                        .font(.system(size: scaled(15, by: scale), weight: .semibold, design: .rounded))
                 } icon: {
                     Image(systemName: vm.streakDays >= 3 ? "flame.fill" : "flame")
                         .foregroundStyle(vm.streakDays >= 3 ? .orange : .secondary)
@@ -179,10 +180,10 @@ struct ContentView: View {
                 Spacer()
 
                 Text("\(vm.todaySessionCount) today")
-                    .font(.caption.weight(.medium))
+                    .font(.system(size: scaled(12, by: scale), weight: .medium, design: .rounded))
                     .foregroundStyle(.black.opacity(0.58))
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
+                    .padding(.horizontal, scaled(10, by: scale))
+                    .padding(.vertical, scaled(6, by: scale))
                     .background(
                         Capsule()
                             .fill(Color.black.opacity(0.06))
@@ -205,14 +206,14 @@ struct ContentView: View {
                             .frame(width: proxy.size.width * progress)
                     }
                 }
-                .frame(height: 10)
+                .frame(height: scaled(10, by: scale))
             }
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
+        .padding(.horizontal, scaled(14, by: scale))
+        .padding(.vertical, scaled(10, by: scale))
         .frame(maxWidth: .infinity)
         .background(
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: scaled(16, by: scale))
                 .fill(Color.white.opacity(0.82))
         )
     }
@@ -228,13 +229,15 @@ struct ContentView: View {
     private var timerCard: some View {
         VStack(spacing: 12) {
             Text(vm.formattedTime())
-                .font(.system(size: 80, weight: .light, design: .rounded))
+                .font(.system(size: scaled(80, by: scale), weight: .light, design: .rounded))
                 .monospacedDigit()
                 .foregroundStyle(.black.opacity(0.84))
 
             Text(statusText)
-                .font(.headline)
+                .font(.system(size: scaled(34, by: scale), weight: .regular, design: .rounded))
                 .foregroundStyle(.black.opacity(0.54))
+                .multilineTextAlignment(.center)
+                .minimumScaleFactor(0.7)
 
             timerActionButtons
 
@@ -242,34 +245,35 @@ struct ContentView: View {
                 completionCard
             }
         }
-        .padding(22)
+        .padding(scaled(22, by: scale))
         .frame(maxWidth: .infinity)
         .background(
-            RoundedRectangle(cornerRadius: 24)
+            RoundedRectangle(cornerRadius: scaled(24, by: scale))
                 .fill(Color.white.opacity(0.82))
         )
     }
 
-    private var compactTimerCard: some View {
-        VStack(spacing: 12) {
+    private func compactTimerCard(scale: CGFloat) -> some View {
+        VStack(spacing: scaled(12, by: scale)) {
             Text(vm.formattedTime())
-                .font(.system(size: 70, weight: .light, design: .rounded))
+                .font(.system(size: scaled(70, by: scale), weight: .light, design: .rounded))
                 .monospacedDigit()
                 .foregroundStyle(.black.opacity(0.84))
 
             Text(statusText)
-                .font(.title3.weight(.semibold))
+                .font(.system(size: scaled(24, by: scale), weight: .semibold, design: .rounded))
                 .foregroundStyle(.black.opacity(0.6))
                 .multilineTextAlignment(.center)
+                .minimumScaleFactor(0.75)
 
             timerActionButtons
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.vertical, 8)
+        .padding(.vertical, scaled(8, by: scale))
     }
 
-    private var postSessionCard: some View {
-        VStack(spacing: 10) {
+    private func postSessionCard(scale: CGFloat) -> some View {
+        VStack(spacing: scaled(10, by: scale)) {
             Text("nice work ✨")
                 .font(.headline)
                 .foregroundStyle(.black.opacity(0.75))
@@ -282,10 +286,10 @@ struct ContentView: View {
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(.black.opacity(0.7))
         }
-        .padding(18)
+        .padding(scaled(18, by: scale))
         .frame(maxWidth: .infinity)
         .background(
-            RoundedRectangle(cornerRadius: 20)
+            RoundedRectangle(cornerRadius: scaled(20, by: scale))
                 .fill(Color.white.opacity(0.82))
         )
     }
@@ -304,8 +308,8 @@ struct ContentView: View {
         }
 
         if vm.state == .focusRunning {
-            Button("take an earned break") {
-                vm.startBreak()
+            Button("take an early break") {
+                vm.startBreak(forceShortBreak: true)
             }
             .buttonStyle(SecondaryButtonStyle())
         }
@@ -332,7 +336,7 @@ struct ContentView: View {
         }
 
         if vm.state == .waitingForWorkConfirmation || vm.state == .overdueWork {
-            Button("sorry i'm late but good to go again!") {
+            Button("i'm back again!") {
                 vm.resumeWork()
             }
             .buttonStyle(MainButtonStyle())
@@ -472,6 +476,17 @@ struct ContentView: View {
 
     private var selectedCloudColor: CloudColor {
         CloudColor(storedValue: selectedCloudColorValue)
+    }
+
+    private func interfaceScale(for size: CGSize, compact: Bool) -> CGFloat {
+        let baseSize = compact ? CGSize(width: 560, height: 440) : CGSize(width: 900, height: 720)
+        let widthScale = size.width / baseSize.width
+        let heightScale = size.height / baseSize.height
+        return min(max(min(widthScale, heightScale), 0.92), 1.35)
+    }
+
+    private func scaled(_ value: CGFloat, by scale: CGFloat) -> CGFloat {
+        value * scale
     }
 
     private func shouldUseCompactLayout(for size: CGSize) -> Bool {

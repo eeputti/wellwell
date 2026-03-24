@@ -9,18 +9,12 @@
 
 import SwiftUI
 import AppKit
-import StoreKit
 
 struct MenuBarContentView: View {
     @EnvironmentObject var vm: TimerViewModel
-    @EnvironmentObject var purchaseManager: PurchaseManager
     @Environment(\.openWindow) private var openWindow
     @AppStorage("selectedCharacterFamily") private var selectedCharacterFamilyValue = CharacterType.cloud.storedValue
     @AppStorage("selectedCloudColor") private var selectedCloudColorValue = CloudColor.default.storedValue
-    @State private var showPaywall = false
-    @State private var showProSettings = false
-    @State private var showStats = false
-    @State private var showSettings = false
 
     var body: some View {
         VStack(spacing: 14) {
@@ -28,10 +22,10 @@ struct MenuBarContentView: View {
                 Spacer()
                 Menu {
                     Button("settings") {
-                        showSettings = true
+                        openWindow(id: "settings")
                     }
                     Button("stats") {
-                        showStats = true
+                        openWindow(id: "stats")
                     }
                     Divider()
                     Button("open main window") {
@@ -71,7 +65,7 @@ struct MenuBarContentView: View {
                 handlePrimaryAction()
             }
             .buttonStyle(.borderedProminent)
-            
+
             if vm.state == .idle {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("cloud color")
@@ -88,8 +82,8 @@ struct MenuBarContentView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 settingsPanel
             }
-            
-            
+
+
             Text(bubbleText)
                 .font(.subheadline)
                 .multilineTextAlignment(.center)
@@ -135,8 +129,8 @@ struct MenuBarContentView: View {
             }
 
             if vm.state == .focusRunning {
-                Button("take an earned break") {
-                    vm.startBreak()
+                Button("take an early break") {
+                    vm.startBreak(forceShortBreak: true)
                 }
                 .buttonStyle(.bordered)
             }
@@ -149,7 +143,7 @@ struct MenuBarContentView: View {
             }
 
             if vm.state == .waitingForWorkConfirmation || vm.state == .overdueWork {
-                Button("sorry i'm late but good to go again!") {
+                Button("i'm back again!") {
                     vm.resumeWork()
                 }
                 .buttonStyle(.borderedProminent)
@@ -169,28 +163,22 @@ struct MenuBarContentView: View {
             }
             .keyboardShortcut("1", modifiers: [.command])
 
+            Button("open settings") {
+                openWindow(id: "settings")
+            }
+            .buttonStyle(.bordered)
+
+            Button("open stats") {
+                openWindow(id: "stats")
+            }
+            .buttonStyle(.bordered)
+
             Button("quit wellwell") {
                 NSApplication.shared.terminate(nil)
             }
         }
         .padding(16)
         .frame(width: 280)
-        .sheet(isPresented: $showPaywall) {
-            ProPaywallView()
-                .environmentObject(purchaseManager)
-        }
-        .sheet(isPresented: $showProSettings) {
-            ProSessionSettingsView()
-                .environmentObject(vm)
-        }
-        .sheet(isPresented: $showStats) {
-            StatsView()
-                .environmentObject(vm)
-        }
-        .sheet(isPresented: $showSettings) {
-            TimerSettingsView()
-                .environmentObject(vm)
-        }
     }
 
     private var statusText: String {
@@ -273,32 +261,6 @@ struct MenuBarContentView: View {
             RoundedRectangle(cornerRadius: 10)
                 .fill(Color.primary.opacity(0.05))
         )
-    }
-
-    private var characterPicker: some View {
-        HStack(spacing: 6) {
-            ForEach(CharacterType.allCases, id: \.storedValue) { character in
-                Button {
-                    selectedCharacterFamilyValue = character.storedValue
-                } label: {
-                    CharacterView(
-                        character: character,
-                        expression: .idle,
-                        cloudColor: selectedCloudColor,
-                        isLocked: false
-                    )
-                    .frame(width: 26, height: 20)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 5)
-                            .stroke(
-                                selectedCharacterFamily == character ? Color.primary : Color.clear,
-                                lineWidth: 1.5
-                            )
-                    )
-                }
-                .buttonStyle(.plain)
-            }
-        }
     }
 
     private func sliderRow(
