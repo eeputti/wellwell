@@ -25,6 +25,7 @@ struct ContentView: View {
                 VStack(spacing: scaled(isCompact ? 10 : 22, by: uiScale)) {
                     if isCompact {
                         compactFocusHeader(scale: uiScale)
+                        Spacer(minLength: 0)
                     } else {
                         headerRow(scale: uiScale)
                     }
@@ -134,7 +135,7 @@ struct ContentView: View {
     }
 
     private func compactFocusHeader(scale: CGFloat) -> some View {
-        VStack(spacing: scaled(10, by: scale)) {
+        HStack(alignment: .top, spacing: scaled(12, by: scale)) {
             CharacterView(
                 character: .cloud,
                 expression: currentExpression,
@@ -143,11 +144,15 @@ struct ContentView: View {
             )
             .frame(width: scaled(150, by: scale), height: scaled(110, by: scale))
 
+            Spacer(minLength: scaled(10, by: scale))
+
             SpeechBubbleView(text: bubbleText, fontSize: scaled(14, by: scale), showTail: false)
-                .frame(maxWidth: scaled(320, by: scale))
+                .frame(maxWidth: scaled(220, by: scale), alignment: .trailing)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .frame(maxWidth: .infinity, alignment: .top)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .padding(.horizontal, scaled(8, by: scale))
+        .padding(.top, scaled(6, by: scale))
     }
 
     private func headerRow(scale: CGFloat) -> some View {
@@ -351,9 +356,7 @@ struct ContentView: View {
             compactFocusActionButtons
         }
         .frame(maxWidth: scaled(360, by: scale))
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.top, scaled(10, by: scale))
-        .padding(.bottom, scaled(6, by: scale))
+        .frame(maxWidth: .infinity)
     }
 
     private func postSessionCard(scale: CGFloat) -> some View {
