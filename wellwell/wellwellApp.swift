@@ -21,13 +21,16 @@ struct wellwellApp: App {
     var body: some Scene {
         WindowGroup(id: "main") {
             ContentView()
-                .background(WindowConstraintsView(minSize: NSSize(width: 900, height: 720)))
+                .frame(minWidth: 560, minHeight: 440)
+                .background(WindowConstraintsView(minSize: NSSize(width: 560, height: 440)))
                 .environmentObject(vm)
                 .environmentObject(purchaseManager)
                 .task {
                     await purchaseManager.prepare()
                 }
         }
+        .defaultSize(width: 900, height: 720)
+        .windowResizability(.contentSize)
         .commands {
             CommandMenu("Focus") {
                 Button("Start Focus Session") {
@@ -57,7 +60,7 @@ struct wellwellApp: App {
             MenuBarContentView()
                 .environmentObject(vm)
         } label: {
-            Label(menuBarTitle, systemImage: menuBarSymbolName)
+            Text(menuBarTitle)
                 .monospacedDigit()
         }
         .menuBarExtraStyle(.window)
@@ -89,20 +92,6 @@ struct wellwellApp: App {
         }
     }
 
-    private var menuBarSymbolName: String {
-        switch vm.state {
-        case .idle:
-            return "cloud.sun"
-        case .focusRunning:
-            return "timer"
-        case .waitingForBreakConfirmation, .overdueBreak:
-            return "figure.walk"
-        case .breakRunning:
-            return "cup.and.saucer"
-        case .waitingForWorkConfirmation, .overdueWork:
-            return "arrow.clockwise"
-        }
-    }
 }
 
 

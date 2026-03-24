@@ -22,7 +22,7 @@ struct ContentView: View {
                 Color(red: 0.96, green: 0.95, blue: 0.92)
                     .ignoresSafeArea()
 
-                VStack(spacing: scaled(isCompact ? 14 : 22, by: uiScale)) {
+                VStack(spacing: scaled(isCompact ? 10 : 22, by: uiScale)) {
                     if isCompact {
                         compactTopRow(scale: uiScale)
                     } else {
@@ -52,7 +52,7 @@ struct ContentView: View {
                     Spacer(minLength: 0)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(scaled(isCompact ? 16 : 30, by: uiScale))
+                .padding(scaled(isCompact ? 12 : 30, by: uiScale))
 
                 if showStartRitualOverlay {
                     StartRitualOverlay()
@@ -134,20 +134,22 @@ struct ContentView: View {
     }
 
     private func compactTopRow(scale: CGFloat) -> some View {
-        HStack(alignment: .top, spacing: 10) {
+        HStack(alignment: .top, spacing: scaled(10, by: scale)) {
             CharacterView(
                 character: .cloud,
                 expression: currentExpression,
                 cloudColor: selectedCloudColor,
                 isLocked: false
             )
-            .frame(width: scaled(72, by: scale), height: scaled(52, by: scale))
+            .frame(width: scaled(94, by: scale), height: scaled(64, by: scale))
 
             Spacer(minLength: scaled(8, by: scale))
 
             SpeechBubbleView(text: bubbleText, fontSize: scaled(14, by: scale), showTail: false)
                 .frame(maxWidth: scaled(190, by: scale), alignment: .trailing)
+                .fixedSize(horizontal: false, vertical: true)
         }
+        .padding(.horizontal, scaled(6, by: scale))
         .frame(maxWidth: .infinity, alignment: .topLeading)
     }
 
@@ -225,23 +227,35 @@ struct ContentView: View {
                     )
             }
 
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: scaled(8, by: scale)) {
                 Text(consistencyHeadlineText)
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.black.opacity(0.64))
 
-                GeometryReader { proxy in
-                    let progress = vm.todayFocusProgress(targetMinutes: dailyFocusTargetMinutes)
-                    ZStack(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 6)
-                            .fill(Color.black.opacity(0.07))
+                progressRow(
+                    title: "focus",
+                    valueText: "\(vm.todayLiveFocusSeconds / 60) min",
+                    progress: vm.todayFocusProgress(targetMinutes: dailyFocusTargetMinutes),
+                    fillColor: Color(red: 0.94, green: 0.79, blue: 0.39).opacity(0.85),
+                    scale: scale
+                )
 
-                        RoundedRectangle(cornerRadius: 6)
-                            .fill(Color(red: 0.94, green: 0.79, blue: 0.39).opacity(0.85))
-                            .frame(width: proxy.size.width * progress)
-                    }
-                }
-                .frame(height: scaled(10, by: scale))
+                let breakTargetMinutes = max(1, dailyFocusTargetMinutes * vm.breakMinutes / max(1, vm.focusMinutes))
+                progressRow(
+                    title: "break",
+                    valueText: "\(vm.todayLiveBreakSeconds / 60) min",
+                    progress: vm.todayBreakProgress(targetMinutes: breakTargetMinutes),
+                    fillColor: Color(red: 0.62, green: 0.79, blue: 0.95).opacity(0.9),
+                    scale: scale
+                )
+
+                progressRow(
+                    title: "total",
+                    valueText: "\(vm.todayTotalLiveWorkSeconds / 60) min",
+                    progress: vm.todayTotalWorkProgress(targetMinutes: dailyFocusTargetMinutes + breakTargetMinutes),
+                    fillColor: Color(red: 0.69, green: 0.89, blue: 0.76).opacity(0.92),
+                    scale: scale
+                )
             }
         }
         .padding(.horizontal, scaled(14, by: scale))
@@ -256,12 +270,46 @@ struct ContentView: View {
     private var consistencyHeadlineText: String {
         let targetSeconds = max(1, dailyFocusTargetMinutes) * 60
         if vm.todayLiveFocusSeconds >= targetSeconds {
-            return "you're on fire! 🔥"
+            return "you're on fire!"
         }
         return vm.todayLiveFocusText()
     }
 
-    private var timerCard: some View {
+    private func progressRow(
+        title: String,
+        valueText: String,
+        progress: Double,
+        fillColor: Color,
+        scale: CGFloat
+    ) -> some View {
+        VStack(alignment: .leading, spacing: scaled(4, by: scale)) {
+            HStack {
+                Text(title)
+                    .font(.system(size: scaled(12, by: scale), weight: .semibold, design: .rounded))
+                    .foregroundStyle(.black.opacity(0.62))
+
+                Spacer()
+
+                Text(valueText)
+                    .font(.system(size: scaled(12, by: scale), weight: .medium, design: .rounded))
+                    .foregroundStyle(.black.opacity(0.62))
+            }
+
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color.black.opacity(0.07))
+
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(fillColor)
+                        .frame(width: proxy.size.width * progress)
+                }
+            }
+            .frame(height: scaled(10, by: scale))
+        }
+    }
+
+    private func timerCard(scale: CGFloat) -> some View {
         VStack(spacing: 12) {
             Text(vm.formattedTime())
                 .font(.system(size: scaled(80, by: scale), weight: .light, design: .rounded))
@@ -289,22 +337,26 @@ struct ContentView: View {
     }
 
     private func compactTimerCard(scale: CGFloat) -> some View {
-        VStack(spacing: scaled(12, by: scale)) {
+        VStack(spacing: scaled(18, by: scale)) {
             Text(vm.formattedTime())
-                .font(.system(size: scaled(70, by: scale), weight: .light, design: .rounded))
+                .font(.system(size: scaled(88, by: scale), weight: .light, design: .rounded))
                 .monospacedDigit()
                 .foregroundStyle(.black.opacity(0.84))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
 
             Text(statusText)
-                .font(.system(size: scaled(24, by: scale), weight: .semibold, design: .rounded))
+                .font(.system(size: scaled(16, by: scale), weight: .semibold, design: .rounded))
                 .foregroundStyle(.black.opacity(0.6))
                 .multilineTextAlignment(.center)
                 .minimumScaleFactor(0.75)
 
             timerActionButtons
         }
+        .frame(maxWidth: scaled(360, by: scale))
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.vertical, scaled(8, by: scale))
+        .padding(.top, scaled(10, by: scale))
+        .padding(.bottom, scaled(6, by: scale))
     }
 
     private func postSessionCard(scale: CGFloat) -> some View {
@@ -517,7 +569,7 @@ struct ContentView: View {
         let baseSize = compact ? CGSize(width: 560, height: 440) : CGSize(width: 900, height: 720)
         let widthScale = size.width / baseSize.width
         let heightScale = size.height / baseSize.height
-        return min(max(min(widthScale, heightScale), 0.92), 1.35)
+        return min(max(min(widthScale, heightScale), 1.0), 1.35)
     }
 
     private func scaled(_ value: CGFloat, by scale: CGFloat) -> CGFloat {
@@ -708,14 +760,18 @@ struct BubbleTail: Shape {
 }
 
 struct MainButtonStyle: ButtonStyle {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
     func makeBody(configuration: Configuration) -> some View {
+        let isCompact = horizontalSizeClass == .compact
         configuration.label
             .font(.headline)
             .foregroundColor(.black)
-            .padding(.horizontal, 22)
+            .frame(minWidth: isCompact ? 170 : 0)
+            .padding(.horizontal, isCompact ? 18 : 22)
             .padding(.vertical, 12)
             .background(
-                RoundedRectangle(cornerRadius: 16)
+                RoundedRectangle(cornerRadius: isCompact ? 18 : 16)
                     .fill(Color(red: 0.94, green: 0.79, blue: 0.39))
             )
             .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
@@ -723,14 +779,18 @@ struct MainButtonStyle: ButtonStyle {
 }
 
 struct SecondaryButtonStyle: ButtonStyle {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
     func makeBody(configuration: Configuration) -> some View {
+        let isCompact = horizontalSizeClass == .compact
         configuration.label
             .font(.headline)
             .foregroundStyle(.black.opacity(0.8))
-            .padding(.horizontal, 18)
-            .padding(.vertical, 10)
+            .frame(minWidth: isCompact ? 170 : 0)
+            .padding(.horizontal, isCompact ? 20 : 18)
+            .padding(.vertical, isCompact ? 11 : 10)
             .background(
-                RoundedRectangle(cornerRadius: 14)
+                RoundedRectangle(cornerRadius: isCompact ? 18 : 14)
                     .fill(Color.white.opacity(0.82))
             )
             .scaleEffect(configuration.isPressed ? 0.98 : 1)
