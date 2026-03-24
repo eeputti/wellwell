@@ -41,12 +41,9 @@ struct MenuBarContentView: View {
                     } label: {
                         Image(systemName: "ellipsis.circle")
                             .font(.title3.weight(.semibold))
+                            .padding(6)
+                            .contentShape(Rectangle())
                     }
-                } label: {
-                    Image(systemName: "ellipsis.circle")
-                        .font(.title3.weight(.semibold))
-                        .padding(6)
-                        .contentShape(Rectangle())
                 }
 
                 CharacterView(
