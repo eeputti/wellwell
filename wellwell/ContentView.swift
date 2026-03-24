@@ -787,7 +787,7 @@ struct SpeechBubbleView: View {
             .font(.system(size: fontSize, weight: .medium, design: .rounded))
             .multilineTextAlignment(.center)
             .lineLimit(2)
-            .truncationMode(.clip)
+            .truncationMode(.tail)
             .fixedSize(horizontal: false, vertical: true)
             .foregroundColor(.black.opacity(0.82))
             .padding(.horizontal, 18)
