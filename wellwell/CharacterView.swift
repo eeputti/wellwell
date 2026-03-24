@@ -60,9 +60,8 @@ struct CharacterView: View {
                 Image(nsImage: image)
                     .resizable()
                     .scaledToFit()
-                    .offset(y: expression == .idle ? (floatUp ? -6 : 6) : 0)
+                    .offset(y: expression == .idle ? (floatUp ? -4 : 4) : 0)
                     .id(renderableImageName)
-                    .transition(.opacity)
             }
         }
         .grayscale(isLocked ? 1 : 0)
@@ -77,9 +76,7 @@ struct CharacterView: View {
             }
         }
         .onAppear {
-            if expression == .idle {
-                floatUp.toggle()
-            }
+            floatUp = expression == .idle && !isLocked
         }
         .onChange(of: expression) { _, newValue in
             let isIdleExpression = newValue == .idle
