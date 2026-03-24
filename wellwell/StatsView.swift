@@ -189,7 +189,6 @@ struct StatsView: View {
                         .opacity(day.isInCurrentMonth ? 1 : 0)
                         .accessibilityLabel(day.isInCurrentMonth ? "day \(day.dayNumber), \(day.sessionCount > 0 ? "active" : "inactive")" : "")
                         .allowsHitTesting(false)
-                    }
                 }
             }
         }
