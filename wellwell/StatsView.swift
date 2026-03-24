@@ -164,7 +164,7 @@ struct StatsView: View {
                 .font(.headline)
                 .foregroundStyle(.black.opacity(0.72))
 
-            LazyVGrid(columns: streakWeekdayColumns, spacing: 8) {
+            LazyVGrid(columns: streakWeekdayColumns, spacing: 10) {
                 ForEach(weekdaySymbols, id: \.self) { symbol in
                     Text(symbol)
                         .font(.caption2.weight(.semibold))
@@ -173,16 +173,23 @@ struct StatsView: View {
                 }
             }
 
-            LazyVGrid(columns: streakWeekdayColumns, spacing: 8) {
+            LazyVGrid(columns: streakWeekdayColumns, spacing: 10) {
                 ForEach(vm.currentMonthActivityGrid) { day in
                     Circle()
                         .fill(dayFillColor(for: day.sessionCount, isVisible: day.isInCurrentMonth))
                         .frame(width: 28, height: 28)
                         .overlay {
+                            if day.isInCurrentMonth && isToday(day.date) {
+                                Circle()
+                                    .stroke(Color.black.opacity(0.36), lineWidth: 1.5)
+                                    .padding(0.5)
+                            }
+                        }
+                        .overlay {
                             if day.isInCurrentMonth {
                                 Text("\(day.dayNumber)")
                                     .font(.caption2.weight(.semibold))
-                                    .foregroundStyle(day.sessionCount > 0 ? .white : .black.opacity(0.58))
+                                    .foregroundStyle(dayNumberColor(for: day.sessionCount))
                             }
                         }
                         .frame(maxWidth: .infinity)
@@ -301,9 +308,24 @@ struct StatsView: View {
 
     private func dayFillColor(for sessionCount: Int, isVisible: Bool) -> Color {
         guard isVisible else { return .clear }
-        return sessionCount > 0
-            ? Color(red: 0.94, green: 0.69, blue: 0.33)
-            : Color.black.opacity(0.08)
+        if sessionCount <= 0 {
+            return Color.black.opacity(0.06)
+        }
+        if sessionCount == 1 {
+            return Color(red: 0.96, green: 0.84, blue: 0.63)
+        }
+        if sessionCount == 2 {
+            return Color(red: 0.95, green: 0.79, blue: 0.54)
+        }
+        return Color(red: 0.93, green: 0.73, blue: 0.45)
+    }
+
+    private func dayNumberColor(for sessionCount: Int) -> Color {
+        sessionCount > 0 ? .black.opacity(0.86) : .black.opacity(0.58)
+    }
+
+    private func isToday(_ date: Date) -> Bool {
+        Calendar.current.isDate(date, inSameDayAs: Date())
     }
 
     private var weekdaySymbols: [String] {
