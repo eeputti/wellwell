@@ -167,17 +167,6 @@ struct MenuBarContentView: View {
                     .buttonStyle(.bordered)
                 }
 
-                Divider()
-
-                Button("open main window") {
-                    openWindow(id: "main")
-                }
-                .keyboardShortcut("1", modifiers: [.command])
-
-                Button("open settings") {
-                    openWindow(id: "settings")
-                }
-                .buttonStyle(.bordered)
             }
             .padding(.top, 14)
             .padding(.horizontal, 20)
