@@ -58,6 +58,16 @@ struct ContentView: View {
                     StartRitualOverlay()
                         .transition(.opacity)
                 }
+
+                if let banner = vm.activeInAppBanner {
+                    VStack {
+                        inAppCompletionBanner(text: banner.text)
+                            .padding(.top, scaled(isCompact ? 10 : 18, by: uiScale))
+                        Spacer()
+                    }
+                    .padding(.horizontal, scaled(isCompact ? 12 : 22, by: uiScale))
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                }
             }
         }
         .onAppear {
@@ -82,9 +92,15 @@ struct ContentView: View {
             )
         ) {
             ReflectionSheetView(
-                onSave: { work, focusScore in
+                onSave: { work, focusScore, sessionType, focusNote in
                     guard let sessionID = vm.pendingReflectionSessionID else { return }
-                    vm.saveReflection(for: sessionID, workSummary: work, focusScore: focusScore)
+                    vm.saveReflection(
+                        for: sessionID,
+                        workSummary: work,
+                        focusScore: focusScore,
+                        sessionType: sessionType,
+                        focusNote: focusNote
+                    )
                 },
                 onSkip: {
                     vm.skipReflection()
@@ -96,6 +112,25 @@ struct ContentView: View {
         }
         .animation(.easeInOut(duration: 0.25), value: vm.showStreakReaction)
         .animation(.easeInOut(duration: 0.25), value: showStartRitualOverlay)
+        .animation(.easeInOut(duration: 0.2), value: vm.activeInAppBanner)
+    }
+
+    private func inAppCompletionBanner(text: String) -> some View {
+        Text(text)
+            .font(.system(size: 13, weight: .medium, design: .rounded))
+            .foregroundStyle(.black.opacity(0.72))
+            .multilineTextAlignment(.center)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background(
+                Capsule()
+                    .fill(Color.white.opacity(0.94))
+            )
+            .overlay(
+                Capsule()
+                    .stroke(Color.black.opacity(0.08), lineWidth: 1)
+            )
+            .shadow(color: .black.opacity(0.06), radius: 8, x: 0, y: 3)
     }
 
     private func compactTopRow(scale: CGFloat) -> some View {
