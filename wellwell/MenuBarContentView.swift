@@ -114,14 +114,6 @@ struct MenuBarContentView: View {
                 )
             }
 
-            if vm.state == .idle {
-                Button("start focus") {
-                    vm.startWork()
-                }
-                .buttonStyle(.borderedProminent)
-                .keyboardShortcut("f", modifiers: [.command, .shift])
-            }
-
             if vm.state == .waitingForBreakConfirmation || vm.state == .overdueBreak {
                 Button("take an earned break") {
                     vm.startBreak()
