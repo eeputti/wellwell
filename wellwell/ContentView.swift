@@ -226,7 +226,7 @@ struct ContentView: View {
         return vm.todayLiveFocusText()
     }
 
-    private var timerCard: some View {
+    private func timerCard(scale: CGFloat) -> some View {
         VStack(spacing: 12) {
             Text(vm.formattedTime())
                 .font(.system(size: scaled(80, by: scale), weight: .light, design: .rounded))
