@@ -9,6 +9,7 @@
 
 import SwiftUI
 import AppKit
+import StoreKit
 
 struct MenuBarContentView: View {
     @EnvironmentObject var vm: TimerViewModel
