@@ -198,23 +198,35 @@ struct ContentView: View {
                     )
             }
 
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: scaled(8, by: scale)) {
                 Text(consistencyHeadlineText)
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.black.opacity(0.64))
 
-                GeometryReader { proxy in
-                    let progress = vm.todayFocusProgress(targetMinutes: dailyFocusTargetMinutes)
-                    ZStack(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 6)
-                            .fill(Color.black.opacity(0.07))
+                progressRow(
+                    title: "focus",
+                    valueText: "\(vm.todayLiveFocusSeconds / 60) min",
+                    progress: vm.todayFocusProgress(targetMinutes: dailyFocusTargetMinutes),
+                    fillColor: Color(red: 0.94, green: 0.79, blue: 0.39).opacity(0.85),
+                    scale: scale
+                )
 
-                        RoundedRectangle(cornerRadius: 6)
-                            .fill(Color(red: 0.94, green: 0.79, blue: 0.39).opacity(0.85))
-                            .frame(width: proxy.size.width * progress)
-                    }
-                }
-                .frame(height: scaled(10, by: scale))
+                let breakTargetMinutes = max(1, dailyFocusTargetMinutes * vm.breakMinutes / max(1, vm.focusMinutes))
+                progressRow(
+                    title: "break",
+                    valueText: "\(vm.todayLiveBreakSeconds / 60) min",
+                    progress: vm.todayBreakProgress(targetMinutes: breakTargetMinutes),
+                    fillColor: Color(red: 0.62, green: 0.79, blue: 0.95).opacity(0.9),
+                    scale: scale
+                )
+
+                progressRow(
+                    title: "total",
+                    valueText: "\(vm.todayTotalLiveWorkSeconds / 60) min",
+                    progress: vm.todayTotalWorkProgress(targetMinutes: dailyFocusTargetMinutes + breakTargetMinutes),
+                    fillColor: Color(red: 0.69, green: 0.89, blue: 0.76).opacity(0.92),
+                    scale: scale
+                )
             }
         }
         .padding(.horizontal, scaled(14, by: scale))
@@ -229,9 +241,43 @@ struct ContentView: View {
     private var consistencyHeadlineText: String {
         let targetSeconds = max(1, dailyFocusTargetMinutes) * 60
         if vm.todayLiveFocusSeconds >= targetSeconds {
-            return "you're on fire! 🔥"
+            return "you're on fire!"
         }
         return vm.todayLiveFocusText()
+    }
+
+    private func progressRow(
+        title: String,
+        valueText: String,
+        progress: Double,
+        fillColor: Color,
+        scale: CGFloat
+    ) -> some View {
+        VStack(alignment: .leading, spacing: scaled(4, by: scale)) {
+            HStack {
+                Text(title)
+                    .font(.system(size: scaled(12, by: scale), weight: .semibold, design: .rounded))
+                    .foregroundStyle(.black.opacity(0.62))
+
+                Spacer()
+
+                Text(valueText)
+                    .font(.system(size: scaled(12, by: scale), weight: .medium, design: .rounded))
+                    .foregroundStyle(.black.opacity(0.62))
+            }
+
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color.black.opacity(0.07))
+
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(fillColor)
+                        .frame(width: proxy.size.width * progress)
+                }
+            }
+            .frame(height: scaled(10, by: scale))
+        }
     }
 
     private func timerCard(scale: CGFloat) -> some View {

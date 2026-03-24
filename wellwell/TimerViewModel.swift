@@ -55,6 +55,8 @@ final class TimerViewModel: ObservableObject {
     private var overdueTimer: Timer?
     private let overdueInterval: TimeInterval = 120
     private var timerCountsUp = false
+    private var currentBreakTargetDuration: Int = 0
+    private var currentBreakWasLong = false
 
     @Published var focusMinutes: Int = 25
     @Published var breakMinutes: Int = 5
@@ -66,6 +68,7 @@ final class TimerViewModel: ObservableObject {
     @Published private(set) var latestCompletedSessionID: UUID?
     @Published var sessionIntentionDraft: String = ""
     @Published var isPaused: Bool = false
+    @Published private(set) var todayCompletedBreakSeconds: Int = 0
     var isUpcomingBreakLong: Bool = false
 
     var focusDuration: Int {
@@ -169,7 +172,9 @@ final class TimerViewModel: ObservableObject {
 
         state = .breakRunning
         let shouldUseLongBreak = isUpcomingBreakLong && !forceShortBreak
-        timeRemaining = shouldUseLongBreak ? longBreakDuration : breakDuration
+        currentBreakTargetDuration = shouldUseLongBreak ? longBreakDuration : breakDuration
+        currentBreakWasLong = shouldUseLongBreak
+        timeRemaining = currentBreakTargetDuration
 
         startTimer()
     }
@@ -244,11 +249,14 @@ final class TimerViewModel: ObservableObject {
             }
 
         case .breakRunning:
+            todayCompletedBreakSeconds += currentBreakTargetDuration
             state = .waitingForWorkConfirmation
-            if isUpcomingBreakLong {
+            if currentBreakWasLong {
                 completedFocusSessions = 0
             }
             isUpcomingBreakLong = false
+            currentBreakTargetDuration = 0
+            currentBreakWasLong = false
             timeRemaining = 0
             timerCountsUp = true
             startTimer()
@@ -375,6 +383,19 @@ final class TimerViewModel: ObservableObject {
     var todayLiveFocusSeconds: Int {
         todayCompletedFocusSeconds + activeFocusElapsedSeconds
     }
+
+    var activeBreakElapsedSeconds: Int {
+        guard state == .breakRunning, !isPaused else { return 0 }
+        return max(0, currentBreakTargetDuration - timeRemaining)
+    }
+
+    var todayLiveBreakSeconds: Int {
+        todayCompletedBreakSeconds + activeBreakElapsedSeconds
+    }
+
+    var todayTotalLiveWorkSeconds: Int {
+        todayLiveFocusSeconds + todayLiveBreakSeconds
+    }
     
     func todayLiveFocusText() -> String {
         let totalMinutes = todayLiveFocusSeconds / 60
@@ -390,6 +411,16 @@ final class TimerViewModel: ObservableObject {
     func todayFocusProgress(targetMinutes: Int) -> Double {
         let targetSeconds = max(1, targetMinutes) * 60
         return min(1.0, Double(todayLiveFocusSeconds) / Double(targetSeconds))
+    }
+
+    func todayBreakProgress(targetMinutes: Int) -> Double {
+        let targetSeconds = max(1, targetMinutes) * 60
+        return min(1.0, Double(todayLiveBreakSeconds) / Double(targetSeconds))
+    }
+
+    func todayTotalWorkProgress(targetMinutes: Int) -> Double {
+        let targetSeconds = max(1, targetMinutes) * 60
+        return min(1.0, Double(todayTotalLiveWorkSeconds) / Double(targetSeconds))
     }
 
     var weeklyFocusSummary: [(dayLabel: String, minutes: Int)] {
