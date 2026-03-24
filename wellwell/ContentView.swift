@@ -82,9 +82,15 @@ struct ContentView: View {
             )
         ) {
             ReflectionSheetView(
-                onSave: { work, focusScore in
+                onSave: { work, focusScore, sessionType, focusNote in
                     guard let sessionID = vm.pendingReflectionSessionID else { return }
-                    vm.saveReflection(for: sessionID, workSummary: work, focusScore: focusScore)
+                    vm.saveReflection(
+                        for: sessionID,
+                        workSummary: work,
+                        focusScore: focusScore,
+                        sessionType: sessionType,
+                        focusNote: focusNote
+                    )
                 },
                 onSkip: {
                     vm.skipReflection()

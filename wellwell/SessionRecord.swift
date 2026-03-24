@@ -16,6 +16,8 @@ struct SessionRecord: Codable, Identifiable, Equatable {
     var reflectionProductivity: ReflectionProductivity?
     var reflectionFeeling: Int?
     var reflectionFocusScore: Int?
+    var sessionType: SessionType?
+    var focusNote: String?
 
     init(
         id: UUID = UUID(),
@@ -25,7 +27,9 @@ struct SessionRecord: Codable, Identifiable, Equatable {
         reflectionWorkSummary: String? = nil,
         reflectionProductivity: ReflectionProductivity? = nil,
         reflectionFeeling: Int? = nil,
-        reflectionFocusScore: Int? = nil
+        reflectionFocusScore: Int? = nil,
+        sessionType: SessionType? = nil,
+        focusNote: String? = nil
     ) {
         self.id = id
         self.completedAt = completedAt
@@ -38,6 +42,31 @@ struct SessionRecord: Codable, Identifiable, Equatable {
             self.reflectionFocusScore = min(max(reflectionFocusScore, 1), 5)
         } else {
             self.reflectionFocusScore = nil
+        }
+        self.sessionType = sessionType
+        let trimmedFocusNote = focusNote?.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.focusNote = trimmedFocusNote?.isEmpty == true ? nil : trimmedFocusNote
+    }
+}
+
+enum SessionType: String, Codable, CaseIterable, Identifiable {
+    case work
+    case study
+    case read
+    case other
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .work:
+            return "work"
+        case .study:
+            return "study"
+        case .read:
+            return "read"
+        case .other:
+            return "other"
         }
     }
 }
