@@ -15,7 +15,7 @@ struct ContentView: View {
 
     var body: some View {
         GeometryReader { proxy in
-            let isCompact = shouldUseCompactLayout(for: proxy.size)
+            let isCompact = isCompactFocusMode(for: proxy.size)
             let uiScale = interfaceScale(for: proxy.size, compact: isCompact)
 
             ZStack {
@@ -24,7 +24,7 @@ struct ContentView: View {
 
                 VStack(spacing: scaled(isCompact ? 10 : 22, by: uiScale)) {
                     if isCompact {
-                        compactTopRow(scale: uiScale)
+                        compactFocusHeader(scale: uiScale)
                     } else {
                         headerRow(scale: uiScale)
                     }
@@ -39,7 +39,7 @@ struct ContentView: View {
                     }
 
                     if isCompact {
-                        compactTimerCard(scale: uiScale)
+                        compactFocusCard(scale: uiScale)
                     } else {
                         cloudCard(scale: uiScale)
                         consistencyCard(scale: uiScale)
@@ -133,24 +133,21 @@ struct ContentView: View {
             .shadow(color: .black.opacity(0.06), radius: 8, x: 0, y: 3)
     }
 
-    private func compactTopRow(scale: CGFloat) -> some View {
-        HStack(alignment: .top, spacing: scaled(10, by: scale)) {
+    private func compactFocusHeader(scale: CGFloat) -> some View {
+        VStack(spacing: scaled(10, by: scale)) {
             CharacterView(
                 character: .cloud,
                 expression: currentExpression,
                 cloudColor: selectedCloudColor,
                 isLocked: false
             )
-            .frame(width: scaled(94, by: scale), height: scaled(64, by: scale))
-
-            Spacer(minLength: scaled(8, by: scale))
+            .frame(width: scaled(150, by: scale), height: scaled(110, by: scale))
 
             SpeechBubbleView(text: bubbleText, fontSize: scaled(14, by: scale), showTail: false)
-                .frame(maxWidth: scaled(190, by: scale), alignment: .trailing)
+                .frame(maxWidth: scaled(320, by: scale))
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.horizontal, scaled(6, by: scale))
-        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .frame(maxWidth: .infinity, alignment: .top)
     }
 
     private func headerRow(scale: CGFloat) -> some View {
@@ -336,8 +333,14 @@ struct ContentView: View {
         )
     }
 
-    private func compactTimerCard(scale: CGFloat) -> some View {
+    private func compactFocusCard(scale: CGFloat) -> some View {
         VStack(spacing: scaled(18, by: scale)) {
+            Text(statusText)
+                .font(.system(size: scaled(16, by: scale), weight: .semibold, design: .rounded))
+                .foregroundStyle(.black.opacity(0.6))
+                .multilineTextAlignment(.center)
+                .minimumScaleFactor(0.75)
+
             Text(vm.formattedTime())
                 .font(.system(size: scaled(88, by: scale), weight: .light, design: .rounded))
                 .monospacedDigit()
@@ -345,13 +348,7 @@ struct ContentView: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
 
-            Text(statusText)
-                .font(.system(size: scaled(16, by: scale), weight: .semibold, design: .rounded))
-                .foregroundStyle(.black.opacity(0.6))
-                .multilineTextAlignment(.center)
-                .minimumScaleFactor(0.75)
-
-            timerActionButtons
+            compactFocusActionButtons
         }
         .frame(maxWidth: scaled(360, by: scale))
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -442,6 +439,25 @@ struct ContentView: View {
             }
             .buttonStyle(SecondaryButtonStyle())
         }
+    }
+
+    @ViewBuilder
+    private var compactFocusActionButtons: some View {
+        Button(vm.isPaused ? "go!" : "pause") {
+            if vm.isPaused {
+                vm.continuePausedSession()
+            } else {
+                vm.pauseCurrentSession()
+            }
+        }
+        .buttonStyle(MainButtonStyle())
+        .disabled(!(vm.state == .focusRunning || vm.state == .breakRunning))
+
+        Button("skip session") {
+            skipSessionFromCompactMode()
+        }
+        .buttonStyle(SecondaryButtonStyle())
+        .disabled(!canSkipSessionInCompactMode)
     }
 
     private var greetingText: String {
@@ -576,8 +592,35 @@ struct ContentView: View {
         value * scale
     }
 
-    private func shouldUseCompactLayout(for size: CGSize) -> Bool {
-        size.width < 560 || size.height < 440
+    private var canSkipSessionInCompactMode: Bool {
+        switch vm.state {
+        case .focusRunning, .waitingForBreakConfirmation, .overdueBreak, .breakRunning, .waitingForWorkConfirmation, .overdueWork:
+            return true
+        case .idle:
+            return false
+        }
+    }
+
+    private func skipSessionFromCompactMode() {
+        switch vm.state {
+        case .focusRunning:
+            vm.startBreak(forceShortBreak: true)
+        case .waitingForBreakConfirmation, .overdueBreak:
+            vm.startBreak()
+        case .breakRunning, .waitingForWorkConfirmation, .overdueWork:
+            vm.resumeWork()
+        case .idle:
+            break
+        }
+    }
+
+    private func isCompactFocusMode(for size: CGSize) -> Bool {
+        let width = size.width
+        let height = size.height
+        let aspectRatio = width / max(height, 1)
+        let smallWindow = width <= 620 || height <= 500
+        let nearSquareWindow = width <= 700 && height <= 700 && aspectRatio <= 1.2
+        return smallWindow || nearSquareWindow
     }
 
     private func startSessionWithRitual() {
