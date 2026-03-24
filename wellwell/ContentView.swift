@@ -190,7 +190,7 @@ struct ContentView: View {
             }
 
             VStack(alignment: .leading, spacing: 6) {
-                Text(vm.todayLiveFocusText())
+                Text(consistencyHeadlineText)
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.black.opacity(0.64))
 
@@ -215,6 +215,14 @@ struct ContentView: View {
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color.white.opacity(0.82))
         )
+    }
+
+    private var consistencyHeadlineText: String {
+        let targetSeconds = max(1, dailyFocusTargetMinutes) * 60
+        if vm.todayLiveFocusSeconds >= targetSeconds {
+            return "you're on fire! 🔥"
+        }
+        return vm.todayLiveFocusText()
     }
 
     private var timerCard: some View {
