@@ -360,8 +360,20 @@ final class TimerViewModel: ObservableObject {
     }
 
     func formattedTime() -> String {
-        let minutes = timeRemaining / 60
-        let seconds = timeRemaining % 60
+        let displaySeconds: Int
+        switch state {
+        case .focusRunning, .breakRunning:
+            displaySeconds = timeRemaining
+        case .idle,
+                .waitingForBreakConfirmation,
+                .waitingForWorkConfirmation,
+                .overdueBreak,
+                .overdueWork:
+            displaySeconds = focusDuration
+        }
+
+        let minutes = displaySeconds / 60
+        let seconds = displaySeconds % 60
         return String(format: "%02d:%02d", minutes, seconds)
     }
 
