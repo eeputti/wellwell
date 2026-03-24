@@ -64,6 +64,7 @@ struct TimerSettingsView: View {
         .onAppear {
             normalizeDailyFocusGoalIfNeeded()
         }
+        .environment(\.colorScheme, .light)
     }
 
     private var timerSection: some View {
