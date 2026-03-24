@@ -16,7 +16,7 @@ struct CharacterView: View {
     var onLockedTap: (() -> Void)? = nil
 
     @AppStorage("selectedCloudColor") private var selectedCloudColorValue = CloudColor.default.storedValue
-    @State private var floatUp = false
+    @State private var isFloatingPhaseA = false
 
     init(
         character: CharacterType,
@@ -60,8 +60,8 @@ struct CharacterView: View {
                 Image(nsImage: image)
                     .resizable()
                     .scaledToFit()
-                    .offset(y: expression == .idle ? (floatUp ? -4 : 4) : 0)
-                    .id(renderableImageName)
+                    .offset(y: expression == .idle ? (isFloatingPhaseA ? -1.6 : 1.6) : 0)
+                    .rotationEffect(.degrees(expression == .idle ? (isFloatingPhaseA ? -0.45 : 0.45) : 0))
             }
         }
         .grayscale(isLocked ? 1 : 0)
@@ -76,25 +76,24 @@ struct CharacterView: View {
             }
         }
         .onAppear {
-            floatUp = expression == .idle && !isLocked
+            isFloatingPhaseA = expression == .idle && !isLocked
         }
         .onChange(of: expression) { _, newValue in
             let isIdleExpression = newValue == .idle
-            floatUp = isIdleExpression && !isLocked
+            isFloatingPhaseA = isIdleExpression && !isLocked
         }
         .onChange(of: isLocked) { _, newValue in
             if newValue {
-                floatUp = false
+                isFloatingPhaseA = false
             } else if expression == .idle {
-                floatUp = true
+                isFloatingPhaseA = true
             }
         }
-        .animation(.easeInOut(duration: 0.27), value: expression)
         .animation(
             expression == .idle
-                ? .easeInOut(duration: 3).repeatForever(autoreverses: true)
+                ? .easeInOut(duration: 4.8).repeatForever(autoreverses: true)
                 : .default,
-            value: floatUp
+            value: isFloatingPhaseA
         )
     }
 }
