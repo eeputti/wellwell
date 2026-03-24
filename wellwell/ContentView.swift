@@ -222,17 +222,26 @@ struct ContentView: View {
     private func consistencyCard(scale: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: scaled(10, by: scale)) {
             HStack(spacing: scaled(10, by: scale)) {
-                Label {
-                    Text("\(vm.streakDays)-day streak")
-                        .font(.system(size: scaled(15, by: scale), weight: .semibold, design: .rounded))
-                } icon: {
+                let hasReachedDailyGoal = vm.todayLiveFocusSeconds >= max(1, dailyFocusTargetMinutes) * 60
+
+                HStack(spacing: scaled(6, by: scale)) {
                     Image(systemName: vm.streakDays >= 3 ? "flame.fill" : "flame")
                         .foregroundStyle(vm.streakDays >= 3 ? .orange : .secondary)
+
+                    if hasReachedDailyGoal {
+                        Text("you've reached your daily goal!")
+                            .font(.system(size: scaled(15, by: scale), weight: .semibold, design: .rounded))
+                        Text("you're on fire!")
+                            .font(.system(size: scaled(15, by: scale), weight: .semibold, design: .rounded))
+                    } else {
+                        Text("\(vm.streakDays)-day streak")
+                            .font(.system(size: scaled(15, by: scale), weight: .semibold, design: .rounded))
+                    }
                 }
 
                 Spacer()
 
-                Text("\(vm.todaySessionCount) today")
+                Text("you've done \(vm.todaySessionCount) session\(vm.todaySessionCount == 1 ? "" : "s") today")
                     .font(.system(size: scaled(12, by: scale), weight: .medium, design: .rounded))
                     .foregroundStyle(.black.opacity(0.58))
                     .padding(.horizontal, scaled(10, by: scale))
@@ -284,10 +293,6 @@ struct ContentView: View {
     }
 
     private var consistencyHeadlineText: String {
-        let targetSeconds = max(1, dailyFocusTargetMinutes) * 60
-        if vm.todayLiveFocusSeconds >= targetSeconds {
-            return "you're on fire!"
-        }
         return vm.todayLiveFocusText()
     }
 
@@ -593,12 +598,6 @@ struct ContentView: View {
         }
 
         var lines: [String] = []
-        if vm.todaySessionCount > 0 {
-            lines.append("you’ve done \(vm.todaySessionCount) session\(vm.todaySessionCount == 1 ? "" : "s") today.")
-        }
-        if vm.todayFocusMinutes > 0 {
-            lines.append("that’s \(formattedDuration(minutes: vm.todayFocusMinutes)) of focus.")
-        }
         if vm.streakDays > 1 {
             lines.append("you’re on a \(vm.streakDays)-day streak.")
         }
