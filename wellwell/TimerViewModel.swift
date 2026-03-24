@@ -127,7 +127,7 @@ final class TimerViewModel: ObservableObject {
         $focusMinutes
             .sink { [weak self] value in
                 self?.savePositive(value, forKey: DefaultsKeys.focusMinutes, fallback: 25)
-                self?.resetIfIdle()
+                self?.resetIfIdle(usingFocusMinutes: value)
             }
             .store(in: &cancellables)
 
@@ -155,6 +155,12 @@ final class TimerViewModel: ObservableObject {
     private func resetIfIdle() {
         if state == .idle {
             timeRemaining = focusDuration
+        }
+    }
+
+    private func resetIfIdle(usingFocusMinutes focusMinutes: Int) {
+        if state == .idle {
+            timeRemaining = max(1, focusMinutes) * 60
         }
     }
 
